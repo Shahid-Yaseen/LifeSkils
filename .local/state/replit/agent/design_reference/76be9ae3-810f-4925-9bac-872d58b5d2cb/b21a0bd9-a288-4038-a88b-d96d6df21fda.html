@@ -1,0 +1,704 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Life in UK Test - E-Learning Platform</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'uk-blue': '#1E3A8A',
+                        'uk-red': '#DC2626',
+                        'royal-purple': '#7C3AED',
+                        'success': '#10B981',
+                        'warning': '#F59E0B'
+                    },
+                    fontFamily: {
+                        'inter': ['Inter', 'sans-serif']
+                    }
+                }
+            }
+        };
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body class="bg-gray-50 font-inter">
+
+<!-- @COMPONENT: Navigation Header -->
+<header class="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between items-center h-16">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 bg-uk-blue rounded-lg flex items-center justify-center">
+                    <i class="fas fa-crown text-white text-lg"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold text-gray-900">Life in UK Test</h1>
+                    <p class="text-xs text-gray-500">E-Learning Platform</p>
+                </div>
+            </div>
+            
+            <nav class="hidden md:flex space-x-8">
+                <a href="#dashboard" class="text-uk-blue font-medium border-b-2 border-uk-blue pb-4">Dashboard</a>
+                <a href="#videos" class="text-gray-600 hover:text-uk-blue pb-4">Videos</a>
+                <a href="#timeline" class="text-gray-600 hover:text-uk-blue pb-4">Timeline</a>
+                <a href="#exercises" class="text-gray-600 hover:text-uk-blue pb-4">Exercises</a>
+                <a href="#resources" class="text-gray-600 hover:text-uk-blue pb-4">Resources</a>
+            </nav>
+
+            <div class="flex items-center space-x-4">
+                <div class="hidden sm:flex items-center space-x-2 bg-gray-100 rounded-full px-3 py-1">
+                    <i class="fas fa-trophy text-warning text-sm"></i>
+                    <span class="text-sm font-medium text-gray-700" data-bind="user.progress">78% Complete</span>
+                </div>
+                <div class="w-8 h-8 bg-uk-blue rounded-full flex items-center justify-center">
+                    <i class="fas fa-user text-white text-sm"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</header>
+<!-- @END_COMPONENT: Navigation Header -->
+
+<!-- @COMPONENT: Main Dashboard Layout -->
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    
+    <!-- Progress Overview Section -->
+    <div class="mb-8">
+        <div class="bg-gradient-to-r from-uk-blue to-royal-purple rounded-2xl p-6 text-white">
+            <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center">
+                <div class="mb-4 lg:mb-0">
+                    <h2 class="text-2xl font-bold mb-2">Welcome back, <span data-bind="user.firstName">Sarah</span>!</h2>
+                    <p class="text-blue-100">Continue your Life in UK test preparation journey</p>
+                </div>
+                
+                <!-- @STATE: overallProgress:number = 78 -->
+                <div class="flex items-center space-x-6">
+                    <div class="text-center">
+                        <div class="relative w-20 h-20">
+                            <svg class="w-20 h-20 transform -rotate-90" viewBox="0 0 36 36">
+                                <path class="text-blue-300" stroke="currentColor" stroke-width="3" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"></path>
+                                <path class="text-white" stroke="currentColor" stroke-width="3" fill="none" stroke-dasharray="78, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"></path>
+                            </svg>
+                            <div class="absolute inset-0 flex items-center justify-center">
+                                <span class="text-lg font-bold">78%</span>
+                            </div>
+                        </div>
+                        <p class="text-sm text-blue-100 mt-1">Overall Progress</p>
+                    </div>
+                    
+                    <div class="text-center">
+                        <div class="text-2xl font-bold">24</div>
+                        <p class="text-sm text-blue-100">Days Left</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Learning Modules Grid -->
+    <div class="grid lg:grid-cols-3 gap-8">
+        
+        <!-- Left Column - Main Content -->
+        <div class="lg:col-span-2 space-y-8">
+            
+            <!-- @COMPONENT: Video Learning Section -->
+            <section id="videos" class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+                <div class="p-6 border-b border-gray-200">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-xl font-semibold text-gray-900 flex items-center">
+                            <i class="fas fa-play-circle text-uk-red mr-3"></i>
+                            Educational Videos
+                        </h3>
+                        <span class="bg-success/10 text-success text-sm font-medium px-3 py-1 rounded-full">
+                            12/18 Completed
+                        </span>
+                    </div>
+                </div>
+                
+                <div class="p-6">
+                    <div class="grid md:grid-cols-2 gap-4">
+                        <!-- @MAP: videoModules.map(module => ( -->
+                        <div class="bg-gray-50 rounded-xl p-4 hover:shadow-md transition-shadow" data-mock="true">
+                            <div class="aspect-video bg-gray-300 rounded-lg mb-4 relative overflow-hidden">
+                                <!-- Mock video thumbnail showing British landmarks -->
+                                <img src="https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=450" alt="British Parliament and Big Ben" class="w-full h-full object-cover" data-mock-image="true" data-implementation="Replace with actual video thumbnail">
+                                <div class="absolute inset-0 bg-black/30 flex items-center justify-center">
+                                    <div class="w-12 h-12 bg-white/90 rounded-full flex items-center justify-center">
+                                        <i class="fas fa-play text-uk-blue"></i>
+                                    </div>
+                                </div>
+                                <div class="absolute top-2 right-2 bg-black/70 text-white text-xs px-2 py-1 rounded">
+                                    12:34
+                                </div>
+                            </div>
+                            <h4 class="font-medium text-gray-900 mb-2" data-bind="module.title">British Political System</h4>
+                            <p class="text-sm text-gray-600 mb-3" data-bind="module.description">Learn about Parliament, the Prime Minister, and democratic processes</p>
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center space-x-2">
+                                    <div class="w-2 h-2 bg-success rounded-full"></div>
+                                    <span class="text-xs text-gray-500">Completed</span>
+                                </div>
+                                <button class="text-uk-blue text-sm font-medium hover:underline" data-event="click:openVideo">
+                                    Watch Again
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="bg-gray-50 rounded-xl p-4 hover:shadow-md transition-shadow" data-mock="true">
+                            <div class="aspect-video bg-gray-300 rounded-lg mb-4 relative overflow-hidden">
+                                <!-- Traditional British culture and customs -->
+                                <img src="https://images.unsplash.com/photo-1467987506553-8f3916508521?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=450" alt="Traditional British afternoon tea setup" class="w-full h-full object-cover" data-mock-image="true">
+                                <div class="absolute inset-0 bg-black/30 flex items-center justify-center">
+                                    <div class="w-12 h-12 bg-white/90 rounded-full flex items-center justify-center">
+                                        <i class="fas fa-play text-uk-blue"></i>
+                                    </div>
+                                </div>
+                                <div class="absolute top-2 right-2 bg-black/70 text-white text-xs px-2 py-1 rounded">
+                                    8:45
+                                </div>
+                            </div>
+                            <h4 class="font-medium text-gray-900 mb-2" data-bind="module.title">British Culture & Traditions</h4>
+                            <p class="text-sm text-gray-600 mb-3" data-bind="module.description">Discover customs, festivals, and cultural practices of the UK</p>
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center space-x-2">
+                                    <div class="w-2 h-2 bg-warning rounded-full"></div>
+                                    <span class="text-xs text-gray-500">In Progress</span>
+                                </div>
+                                <button class="text-uk-blue text-sm font-medium hover:underline" data-event="click:continueVideo">
+                                    Continue
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="bg-gray-50 rounded-xl p-4 hover:shadow-md transition-shadow" data-mock="true">
+                            <div class="aspect-video bg-gray-300 rounded-lg mb-4 relative overflow-hidden">
+                                <!-- Historical British landmarks and architecture -->
+                                <img src="https://images.unsplash.com/photo-1486299267070-83823f5448dd?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=450" alt="Tower Bridge in London" class="w-full h-full object-cover" data-mock-image="true">
+                                <div class="absolute inset-0 bg-black/30 flex items-center justify-center">
+                                    <div class="w-12 h-12 bg-white/90 rounded-full flex items-center justify-center">
+                                        <i class="fas fa-lock text-gray-400"></i>
+                                    </div>
+                                </div>
+                                <div class="absolute top-2 right-2 bg-black/70 text-white text-xs px-2 py-1 rounded">
+                                    15:22
+                                </div>
+                            </div>
+                            <h4 class="font-medium text-gray-900 mb-2" data-bind="module.title">British History Overview</h4>
+                            <p class="text-sm text-gray-600 mb-3" data-bind="module.description">Key historical events and figures that shaped modern Britain</p>
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center space-x-2">
+                                    <div class="w-2 h-2 bg-gray-400 rounded-full"></div>
+                                    <span class="text-xs text-gray-500">Locked</span>
+                                </div>
+                                <span class="text-gray-400 text-sm">Complete previous modules</span>
+                            </div>
+                        </div>
+
+                        <div class="bg-gray-50 rounded-xl p-4 hover:shadow-md transition-shadow" data-mock="true">
+                            <div class="aspect-video bg-gray-300 rounded-lg mb-4 relative overflow-hidden">
+                                <!-- British geography and regions -->
+                                <img src="https://pixabay.com/get/g66fcf92fa65153e4a3524bb8fb00554e66f580f578685717e3becd3abb93efd41617f0a248352a4b2f35cfc5b6a1a2a30eda3939ddfad05eae0d0ae60192843f_1280.jpg" alt="Scottish Highlands landscape" class="w-full h-full object-cover" data-mock-image="true">
+                                <div class="absolute inset-0 bg-black/30 flex items-center justify-center">
+                                    <div class="w-12 h-12 bg-white/90 rounded-full flex items-center justify-center">
+                                        <i class="fas fa-lock text-gray-400"></i>
+                                    </div>
+                                </div>
+                                <div class="absolute top-2 right-2 bg-black/70 text-white text-xs px-2 py-1 rounded">
+                                    11:08
+                                </div>
+                            </div>
+                            <h4 class="font-medium text-gray-900 mb-2" data-bind="module.title">UK Geography & Regions</h4>
+                            <p class="text-sm text-gray-600 mb-3" data-bind="module.description">Explore England, Scotland, Wales, and Northern Ireland</p>
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center space-x-2">
+                                    <div class="w-2 h-2 bg-gray-400 rounded-full"></div>
+                                    <span class="text-xs text-gray-500">Locked</span>
+                                </div>
+                                <span class="text-gray-400 text-sm">Complete previous modules</span>
+                            </div>
+                        </div>
+                        <!-- @END_MAP -->
+                    </div>
+                </div>
+            </section>
+            <!-- @END_COMPONENT: Video Learning Section -->
+
+            <!-- @COMPONENT: Interactive Timeline Section -->
+            <section id="timeline" class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+                <div class="p-6 border-b border-gray-200">
+                    <h3 class="text-xl font-semibold text-gray-900 flex items-center">
+                        <i class="fas fa-clock text-royal-purple mr-3"></i>
+                        Historical Timeline
+                    </h3>
+                    <p class="text-gray-600 mt-1">Interactive chronology of key British historical events</p>
+                </div>
+                
+                <div class="p-6">
+                    <div class="relative">
+                        <!-- Timeline Line -->
+                        <div class="absolute left-8 top-0 bottom-0 w-0.5 bg-gradient-to-b from-uk-blue to-royal-purple"></div>
+                        
+                        <!-- @MAP: timelineEvents.map(event => ( -->
+                        <div class="relative pl-20 pb-8" data-mock="true">
+                            <div class="absolute left-5 w-6 h-6 bg-uk-blue rounded-full border-4 border-white shadow-lg flex items-center justify-center">
+                                <div class="w-2 h-2 bg-white rounded-full"></div>
+                            </div>
+                            <div class="bg-gray-50 rounded-xl p-4 hover:shadow-md transition-shadow cursor-pointer" data-event="click:showEventDetails">
+                                <div class="flex items-start justify-between mb-2">
+                                    <span class="bg-uk-blue text-white text-xs font-medium px-2 py-1 rounded" data-bind="event.year">1066</span>
+                                    <i class="fas fa-chevron-right text-gray-400"></i>
+                                </div>
+                                <h4 class="font-semibold text-gray-900 mb-2" data-bind="event.title">Norman Conquest</h4>
+                                <p class="text-sm text-gray-600" data-bind="event.description">William the Conqueror defeats Harold II at the Battle of Hastings, fundamentally changing English society and culture.</p>
+                            </div>
+                        </div>
+
+                        <div class="relative pl-20 pb-8" data-mock="true">
+                            <div class="absolute left-5 w-6 h-6 bg-uk-red rounded-full border-4 border-white shadow-lg flex items-center justify-center">
+                                <div class="w-2 h-2 bg-white rounded-full"></div>
+                            </div>
+                            <div class="bg-gray-50 rounded-xl p-4 hover:shadow-md transition-shadow cursor-pointer" data-event="click:showEventDetails">
+                                <div class="flex items-start justify-between mb-2">
+                                    <span class="bg-uk-red text-white text-xs font-medium px-2 py-1 rounded" data-bind="event.year">1215</span>
+                                    <i class="fas fa-chevron-right text-gray-400"></i>
+                                </div>
+                                <h4 class="font-semibold text-gray-900 mb-2" data-bind="event.title">Magna Carta</h4>
+                                <p class="text-sm text-gray-600" data-bind="event.description">King John signs the Great Charter, establishing the principle that nobody, including the king, is above the law.</p>
+                            </div>
+                        </div>
+
+                        <div class="relative pl-20 pb-8" data-mock="true">
+                            <div class="absolute left-5 w-6 h-6 bg-royal-purple rounded-full border-4 border-white shadow-lg flex items-center justify-center">
+                                <div class="w-2 h-2 bg-white rounded-full"></div>
+                            </div>
+                            <div class="bg-gray-50 rounded-xl p-4 hover:shadow-md transition-shadow cursor-pointer" data-event="click:showEventDetails">
+                                <div class="flex items-start justify-between mb-2">
+                                    <span class="bg-royal-purple text-white text-xs font-medium px-2 py-1 rounded" data-bind="event.year">1707</span>
+                                    <i class="fas fa-chevron-right text-gray-400"></i>
+                                </div>
+                                <h4 class="font-semibold text-gray-900 mb-2" data-bind="event.title">Act of Union</h4>
+                                <p class="text-sm text-gray-600" data-bind="event.description">The Acts of Union unite the Kingdom of England and Kingdom of Scotland to form the Kingdom of Great Britain.</p>
+                            </div>
+                        </div>
+
+                        <div class="relative pl-20" data-mock="true">
+                            <div class="absolute left-5 w-6 h-6 bg-success rounded-full border-4 border-white shadow-lg flex items-center justify-center">
+                                <div class="w-2 h-2 bg-white rounded-full"></div>
+                            </div>
+                            <div class="bg-gray-50 rounded-xl p-4 hover:shadow-md transition-shadow cursor-pointer" data-event="click:showEventDetails">
+                                <div class="flex items-start justify-between mb-2">
+                                    <span class="bg-success text-white text-xs font-medium px-2 py-1 rounded" data-bind="event.year">1952</span>
+                                    <i class="fas fa-chevron-right text-gray-400"></i>
+                                </div>
+                                <h4 class="font-semibold text-gray-900 mb-2" data-bind="event.title">Elizabeth II Becomes Queen</h4>
+                                <p class="text-sm text-gray-600" data-bind="event.description">Following her father's death, Elizabeth II ascends to the throne, beginning the modern Elizabethan era.</p>
+                            </div>
+                        </div>
+                        <!-- @END_MAP -->
+                    </div>
+                    
+                    <div class="mt-6 text-center">
+                        <button class="text-uk-blue font-medium hover:underline" data-event="click:loadMoreEvents">
+                            <i class="fas fa-plus mr-2"></i>Load More Events
+                        </button>
+                    </div>
+                </div>
+            </section>
+            <!-- @END_COMPONENT: Interactive Timeline Section -->
+
+            <!-- @COMPONENT: AI-Generated Exercises Section -->
+            <section id="exercises" class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+                <div class="p-6 border-b border-gray-200">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-xl font-semibold text-gray-900 flex items-center">
+                            <i class="fas fa-brain text-warning mr-3"></i>
+                            AI-Generated Exercises
+                        </h3>
+                        <button class="bg-warning text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-orange-500 transition-colors" data-event="click:generateNewExercise">
+                            <i class="fas fa-sync-alt mr-2"></i>Generate New
+                        </button>
+                    </div>
+                    <p class="text-gray-600 mt-1">Fill-in-the-blank exercises with AI-generated variations to enhance critical thinking</p>
+                </div>
+                
+                <div class="p-6">
+                    <!-- @FUNCTIONALITY: This exercise should be AI-generated with different text variations each time -->
+                    <div class="bg-blue-50 rounded-xl p-6" data-mock="true">
+                        <h4 class="font-semibold text-gray-900 mb-4">Complete the text about British Democracy:</h4>
+                        
+                        <div class="bg-white rounded-lg p-4 mb-6 leading-relaxed text-gray-700">
+                            <p class="mb-4">
+                                The United Kingdom is a <span class="inline-block mx-1">
+                                    <select class="border border-gray-300 rounded px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-uk-blue" data-event="change:validateAnswer" data-implementation="Should check answer and provide feedback">
+                                        <option value="">Choose...</option>
+                                        <option value="republic">Republic</option>
+                                        <option value="monarchy">Constitutional Monarchy</option>
+                                        <option value="dictatorship">Dictatorship</option>
+                                        <option value="federation">Federation</option>
+                                    </select>
+                                </span> where the head of state is the 
+                                <span class="inline-block mx-1">
+                                    <select class="border border-gray-300 rounded px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-uk-blue" data-event="change:validateAnswer">
+                                        <option value="">Choose...</option>
+                                        <option value="president">President</option>
+                                        <option value="prime_minister">Prime Minister</option>
+                                        <option value="monarch">Monarch</option>
+                                        <option value="chancellor">Chancellor</option>
+                                    </select>
+                                </span>. The UK Parliament consists of two houses: the House of 
+                                <span class="inline-block mx-1">
+                                    <select class="border border-gray-300 rounded px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-uk-blue" data-event="change:validateAnswer">
+                                        <option value="">Choose...</option>
+                                        <option value="representatives">Representatives</option>
+                                        <option value="commons">Commons</option>
+                                        <option value="senators">Senators</option>
+                                        <option value="delegates">Delegates</option>
+                                    </select>
+                                </span> and the House of 
+                                <span class="inline-block mx-1">
+                                    <select class="border border-gray-300 rounded px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-uk-blue" data-event="change:validateAnswer">
+                                        <option value="">Choose...</option>
+                                        <option value="lords">Lords</option>
+                                        <option value="nobles">Nobles</option>
+                                        <option value="peers">Peers</option>
+                                        <option value="ministers">Ministers</option>
+                                    </select>
+                                </span>. Elections to the House of Commons must be held at least every 
+                                <span class="inline-block mx-1">
+                                    <select class="border border-gray-300 rounded px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-uk-blue" data-event="change:validateAnswer">
+                                        <option value="">Choose...</option>
+                                        <option value="three">3 years</option>
+                                        <option value="four">4 years</option>
+                                        <option value="five">5 years</option>
+                                        <option value="six">6 years</option>
+                                    </select>
+                                </span>.
+                            </p>
+                        </div>
+                        
+                        <div class="flex items-center justify-between">
+                            <div class="text-sm text-gray-600">
+                                <i class="fas fa-check-circle text-success mr-1"></i>
+                                <span data-bind="exercise.correctAnswers">3</span> of <span data-bind="exercise.totalQuestions">5</span> correct
+                            </div>
+                            <button class="bg-uk-blue text-white font-medium px-6 py-2 rounded-lg hover:bg-blue-800 transition-colors" data-event="click:checkAnswers">
+                                Check Answers
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Answer feedback -->
+                    <div class="mt-4 p-4 bg-gray-50 rounded-lg hidden" id="feedback-panel" data-implementation="Show after checking answers">
+                        <h5 class="font-medium text-gray-900 mb-2">Feedback:</h5>
+                        <ul class="space-y-1 text-sm text-gray-600">
+                            <li class="flex items-center"><i class="fas fa-check text-success mr-2"></i> Constitutional Monarchy - Correct!</li>
+                            <li class="flex items-center"><i class="fas fa-check text-success mr-2"></i> Monarch - Correct!</li>
+                            <li class="flex items-center"><i class="fas fa-check text-success mr-2"></i> Commons - Correct!</li>
+                            <li class="flex items-center"><i class="fas fa-times text-red-500 mr-2"></i> Lords - Correct answer is "Lords"</li>
+                            <li class="flex items-center"><i class="fas fa-times text-red-500 mr-2"></i> 5 years - Correct answer is "5 years"</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+            <!-- @END_COMPONENT: AI-Generated Exercises Section -->
+        </div>
+
+        <!-- Right Column - Sidebar -->
+        <div class="space-y-6">
+            
+            <!-- @COMPONENT: Learning Progress Roadmap -->
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+                <div class="p-6 border-b border-gray-200">
+                    <h3 class="text-lg font-semibold text-gray-900 flex items-center">
+                        <i class="fas fa-map text-success mr-3"></i>
+                        Learning Roadmap
+                    </h3>
+                </div>
+                
+                <div class="p-6">
+                    <!-- @MAP: roadmapItems.map(item => ( -->
+                    <div class="flex items-start space-x-3 mb-4" data-mock="true">
+                        <div class="w-6 h-6 bg-success rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                            <i class="fas fa-check text-white text-xs"></i>
+                        </div>
+                        <div>
+                            <h4 class="font-medium text-gray-900 text-sm" data-bind="item.title">British Values</h4>
+                            <p class="text-xs text-gray-600" data-bind="item.description">Democracy, rule of law, liberty</p>
+                            <div class="w-full bg-gray-200 rounded-full h-1.5 mt-2">
+                                <div class="bg-success h-1.5 rounded-full" style="width: 100%"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex items-start space-x-3 mb-4" data-mock="true">
+                        <div class="w-6 h-6 bg-warning rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                            <i class="fas fa-clock text-white text-xs"></i>
+                        </div>
+                        <div>
+                            <h4 class="font-medium text-gray-900 text-sm" data-bind="item.title">Government & Politics</h4>
+                            <p class="text-xs text-gray-600" data-bind="item.description">Parliament, elections, devolution</p>
+                            <div class="w-full bg-gray-200 rounded-full h-1.5 mt-2">
+                                <div class="bg-warning h-1.5 rounded-full" style="width: 75%"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex items-start space-x-3 mb-4" data-mock="true">
+                        <div class="w-6 h-6 bg-gray-300 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                            <span class="text-gray-600 text-xs font-bold">3</span>
+                        </div>
+                        <div>
+                            <h4 class="font-medium text-gray-900 text-sm" data-bind="item.title">History</h4>
+                            <p class="text-xs text-gray-600" data-bind="item.description">Key events and periods</p>
+                            <div class="w-full bg-gray-200 rounded-full h-1.5 mt-2">
+                                <div class="bg-gray-300 h-1.5 rounded-full" style="width: 0%"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex items-start space-x-3 mb-4" data-mock="true">
+                        <div class="w-6 h-6 bg-gray-300 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                            <span class="text-gray-600 text-xs font-bold">4</span>
+                        </div>
+                        <div>
+                            <h4 class="font-medium text-gray-900 text-sm" data-bind="item.title">Geography</h4>
+                            <p class="text-xs text-gray-600" data-bind="item.description">Countries, regions, cities</p>
+                            <div class="w-full bg-gray-200 rounded-full h-1.5 mt-2">
+                                <div class="bg-gray-300 h-1.5 rounded-full" style="width: 0%"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex items-start space-x-3" data-mock="true">
+                        <div class="w-6 h-6 bg-gray-300 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                            <span class="text-gray-600 text-xs font-bold">5</span>
+                        </div>
+                        <div>
+                            <h4 class="font-medium text-gray-900 text-sm" data-bind="item.title">Culture & Society</h4>
+                            <p class="text-xs text-gray-600" data-bind="item.description">Traditions, sports, religion</p>
+                            <div class="w-full bg-gray-200 rounded-full h-1.5 mt-2">
+                                <div class="bg-gray-300 h-1.5 rounded-full" style="width: 0%"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- @END_MAP -->
+                </div>
+            </div>
+            <!-- @END_COMPONENT: Learning Progress Roadmap -->
+
+            <!-- @COMPONENT: Downloadable Resources -->
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+                <div class="p-6 border-b border-gray-200">
+                    <h3 class="text-lg font-semibold text-gray-900 flex items-center">
+                        <i class="fas fa-download text-uk-red mr-3"></i>
+                        Cheatsheets & Resources
+                    </h3>
+                </div>
+                
+                <div class="p-6 space-y-3">
+                    <!-- @MAP: resources.map(resource => ( -->
+                    <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer" data-mock="true" data-event="click:downloadResource">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-8 h-8 bg-uk-red/10 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-file-pdf text-uk-red text-sm"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-medium text-gray-900 text-sm" data-bind="resource.title">Key Dates Cheatsheet</h4>
+                                <p class="text-xs text-gray-600" data-bind="resource.size">2.3 MB</p>
+                            </div>
+                        </div>
+                        <i class="fas fa-download text-gray-400 hover:text-uk-red"></i>
+                    </div>
+
+                    <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer" data-mock="true" data-event="click:downloadResource">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-8 h-8 bg-uk-blue/10 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-file-alt text-uk-blue text-sm"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-medium text-gray-900 text-sm" data-bind="resource.title">Government Structure</h4>
+                                <p class="text-xs text-gray-600" data-bind="resource.size">1.8 MB</p>
+                            </div>
+                        </div>
+                        <i class="fas fa-download text-gray-400 hover:text-uk-blue"></i>
+                    </div>
+
+                    <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer" data-mock="true" data-event="click:downloadResource">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-8 h-8 bg-royal-purple/10 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-map text-royal-purple text-sm"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-medium text-gray-900 text-sm" data-bind="resource.title">UK Geography Map</h4>
+                                <p class="text-xs text-gray-600" data-bind="resource.size">4.1 MB</p>
+                            </div>
+                        </div>
+                        <i class="fas fa-download text-gray-400 hover:text-royal-purple"></i>
+                    </div>
+
+                    <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer" data-mock="true" data-event="click:downloadResource">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-8 h-8 bg-success/10 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-list text-success text-sm"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-medium text-gray-900 text-sm" data-bind="resource.title">Practice Test Questions</h4>
+                                <p class="text-xs text-gray-600" data-bind="resource.size">956 KB</p>
+                            </div>
+                        </div>
+                        <i class="fas fa-download text-gray-400 hover:text-success"></i>
+                    </div>
+                    <!-- @END_MAP -->
+                </div>
+            </div>
+            <!-- @END_COMPONENT: Downloadable Resources -->
+
+            <!-- @COMPONENT: Study Statistics -->
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+                <div class="p-6 border-b border-gray-200">
+                    <h3 class="text-lg font-semibold text-gray-900 flex items-center">
+                        <i class="fas fa-chart-line text-success mr-3"></i>
+                        Study Statistics
+                    </h3>
+                </div>
+                
+                <div class="p-6 space-y-4">
+                    <div class="flex items-center justify-between">
+                        <span class="text-sm text-gray-600">Total Study Time</span>
+                        <span class="font-semibold text-gray-900" data-bind="stats.totalTime">24h 32m</span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span class="text-sm text-gray-600">Exercises Completed</span>
+                        <span class="font-semibold text-gray-900" data-bind="stats.exercisesCompleted">47</span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span class="text-sm text-gray-600">Average Score</span>
+                        <span class="font-semibold text-success" data-bind="stats.averageScore">87%</span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span class="text-sm text-gray-600">Current Streak</span>
+                        <span class="font-semibold text-warning" data-bind="stats.streak">12 days</span>
+                    </div>
+                    
+                    <div class="pt-4 border-t border-gray-200">
+                        <button class="w-full bg-uk-blue text-white font-medium py-2 rounded-lg hover:bg-blue-800 transition-colors" data-event="click:takeFullTest">
+                            <i class="fas fa-clipboard-check mr-2"></i>
+                            Take Practice Test
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <!-- @END_COMPONENT: Study Statistics -->
+        </div>
+    </div>
+</div>
+<!-- @END_COMPONENT: Main Dashboard Layout -->
+
+<!-- Mobile Navigation (Hidden on desktop) -->
+<nav class="md:hidden bg-white border-t border-gray-200 fixed bottom-0 left-0 right-0 z-50">
+    <div class="flex items-center justify-around py-2">
+        <a href="#dashboard" class="flex flex-col items-center py-2 px-3 text-uk-blue">
+            <i class="fas fa-home text-lg"></i>
+            <span class="text-xs mt-1">Dashboard</span>
+        </a>
+        <a href="#videos" class="flex flex-col items-center py-2 px-3 text-gray-400">
+            <i class="fas fa-play text-lg"></i>
+            <span class="text-xs mt-1">Videos</span>
+        </a>
+        <a href="#timeline" class="flex flex-col items-center py-2 px-3 text-gray-400">
+            <i class="fas fa-clock text-lg"></i>
+            <span class="text-xs mt-1">Timeline</span>
+        </a>
+        <a href="#exercises" class="flex flex-col items-center py-2 px-3 text-gray-400">
+            <i class="fas fa-brain text-lg"></i>
+            <span class="text-xs mt-1">Exercises</span>
+        </a>
+        <a href="#resources" class="flex flex-col items-center py-2 px-3 text-gray-400">
+            <i class="fas fa-download text-lg"></i>
+            <span class="text-xs mt-1">Resources</span>
+        </a>
+    </div>
+</nav>
+
+<script>
+// Encapsulated functionality for the e-learning platform
+(function() {
+    // TODO: Implement video player functionality
+    // TODO: Implement timeline event detail modals
+    // TODO: Implement AI exercise generation and validation
+    // TODO: Implement progress tracking and statistics
+    // TODO: Implement resource download functionality
+    
+    // Mock interactive functionality for demonstration
+    document.addEventListener('DOMContentLoaded', function() {
+        
+        // Timeline interaction
+        const timelineEvents = document.querySelectorAll('[data-event*="showEventDetails"]');
+        timelineEvents.forEach(event => {
+            event.addEventListener('click', function() {
+                // TODO: Show detailed modal with event information, images, and related content
+                console.log('Show event details modal');
+            });
+        });
+
+        // Exercise answer validation
+        const exerciseSelects = document.querySelectorAll('[data-event*="validateAnswer"]');
+        exerciseSelects.forEach(select => {
+            select.addEventListener('change', function() {
+                // TODO: Provide immediate feedback and update progress
+                console.log('Validate answer and provide feedback');
+            });
+        });
+
+        // Generate new exercise
+        const generateBtn = document.querySelector('[data-event*="generateNewExercise"]');
+        if (generateBtn) {
+            generateBtn.addEventListener('click', function() {
+                // TODO: Call AI service to generate new exercise content
+                console.log('Generate new AI exercise');
+            });
+        }
+
+        // Resource downloads
+        const downloadBtns = document.querySelectorAll('[data-event*="downloadResource"]');
+        downloadBtns.forEach(btn => {
+            btn.addEventListener('click', function() {
+                // TODO: Trigger file download and track usage analytics
+                console.log('Download resource');
+            });
+        });
+
+        // Video player interactions
+        const videoBtns = document.querySelectorAll('[data-event*="Video"]');
+        videoBtns.forEach(btn => {
+            btn.addEventListener('click', function() {
+                // TODO: Open video modal with progress tracking
+                console.log('Open video player');
+            });
+        });
+
+        // Mobile navigation
+        const navLinks = document.querySelectorAll('nav a[href^="#"]');
+        navLinks.forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                // TODO: Smooth scroll to section and update active state
+                const targetId = this.getAttribute('href');
+                const targetSection = document.querySelector(targetId);
+                if (targetSection) {
+                    targetSection.scrollIntoView({ behavior: 'smooth' });
+                }
+            });
+        });
+    });
+})();
+</script>
+
+</body>
+</html>

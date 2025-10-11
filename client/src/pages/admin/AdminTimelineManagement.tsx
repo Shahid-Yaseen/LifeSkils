@@ -1,0 +1,836 @@
+import React, { useState, useEffect } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { 
+  Calendar, 
+  Plus, 
+  Edit, 
+  Trash2, 
+  Save, 
+  X, 
+  Clock, 
+  Star,
+  User,
+  FileText,
+  Search,
+  Filter,
+  ChevronDown,
+  ChevronUp,
+  Upload,
+  Image as ImageIcon
+} from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Badge } from '@/components/ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { toast } from '@/hooks/use-toast';
+import AdminLayout from '@/components/AdminLayout';
+
+interface TimelineEvent {
+  id: string;
+  title: string;
+  description: string;
+  details?: string;
+  year: string;
+  period: string;
+  importance: number;
+  keyFigures?: string;
+  significance?: string;
+  sourceBook?: string;
+  chapterReference?: string;
+  pageNumber?: number;
+  eventImage?: string;
+  imageDescription?: string;
+  enhanced?: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// Event Form Component
+const EventForm = ({ 
+  event, 
+  onSubmit, 
+  onCancel 
+}: { 
+  event?: TimelineEvent; 
+  onSubmit: (data: Omit<TimelineEvent, 'id' | 'createdAt' | 'updatedAt'>) => void;
+  onCancel: () => void;
+}) => {
+  const [formData, setFormData] = useState({
+    title: event?.title || '',
+    description: event?.description || '',
+    details: event?.details || '',
+    year: event?.year || '',
+    period: event?.period || '',
+    importance: event?.importance || 3,
+    keyFigures: event?.keyFigures || '',
+    significance: event?.significance || '',
+    sourceBook: event?.sourceBook || '',
+    chapterReference: event?.chapterReference || '',
+    pageNumber: event?.pageNumber || undefined,
+    eventImage: event?.eventImage || '',
+    imageDescription: event?.imageDescription || ''
+  });
+
+  const [isUploading, setIsUploading] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onSubmit(formData);
+  };
+
+  const handleImageUpload = async (file: File) => {
+    setIsUploading(true);
+    try {
+      // Create FormData for file upload
+      const formData = new FormData();
+      formData.append('image', file);
+
+      // Upload file via server
+      const response = await fetch('/api/timeline/upload-image', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
+        },
+        body: formData
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to upload image');
+      }
+
+      const { publicUrl } = await response.json();
+
+      // Update form data with image URL
+      setFormData(prev => ({ ...prev, eventImage: publicUrl }));
+      toast({
+        title: "Success",
+        description: "Image uploaded successfully!",
+      });
+    } catch (error) {
+      console.error('Error uploading image:', error);
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to upload image. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setSelectedFile(file);
+      handleImageUpload(file);
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-3 max-h-[70vh] overflow-y-auto">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div>
+          <Label htmlFor="title" className="text-gray-700 dark:text-gray-300">Title *</Label>
+          <Input
+            id="title"
+            value={formData.title}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, title: e.target.value })}
+            required
+            className="border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+          />
+        </div>
+        
+        <div>
+          <Label htmlFor="year" className="text-gray-700 dark:text-gray-300">Year *</Label>
+          <Input
+            id="year"
+            type="number"
+            value={formData.year}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, year: e.target.value })}
+            required
+            className="border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+          />
+        </div>
+      </div>
+
+      <div>
+        <Label htmlFor="description" className="text-gray-700 dark:text-gray-300">Description *</Label>
+        <Textarea
+          id="description"
+          value={formData.description}
+          onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setFormData({ ...formData, description: e.target.value })}
+          required
+          rows={3}
+          className="border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+        />
+      </div>
+
+      <div>
+        <Label htmlFor="details" className="text-gray-700 dark:text-gray-300">Details</Label>
+        <Textarea
+          id="details"
+          value={formData.details}
+          onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setFormData({ ...formData, details: e.target.value })}
+          rows={3}
+          className="border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+        />
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div>
+          <Label htmlFor="period" className="text-gray-700 dark:text-gray-300">Period *</Label>
+          <Select value={formData.period} onValueChange={(value) => setFormData({ ...formData, period: value })}>
+            <SelectTrigger className="border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white">
+              <SelectValue placeholder="Select period" />
+            </SelectTrigger>
+            <SelectContent className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
+              <SelectItem value="medieval" className="text-gray-900 dark:text-white">Medieval</SelectItem>
+              <SelectItem value="legal" className="text-gray-900 dark:text-white">Legal</SelectItem>
+              <SelectItem value="political" className="text-gray-900 dark:text-white">Political</SelectItem>
+              <SelectItem value="royal" className="text-gray-900 dark:text-white">Royal</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div>
+          <Label htmlFor="importance" className="text-gray-700 dark:text-gray-300">Importance *</Label>
+          <Select value={formData.importance.toString()} onValueChange={(value) => setFormData({ ...formData, importance: parseInt(value) })}>
+            <SelectTrigger className="border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
+              <SelectItem value="1" className="text-gray-900 dark:text-white">1 - Minor</SelectItem>
+              <SelectItem value="2" className="text-gray-900 dark:text-white">2 - Somewhat Important</SelectItem>
+              <SelectItem value="3" className="text-gray-900 dark:text-white">3 - Important</SelectItem>
+              <SelectItem value="4" className="text-gray-900 dark:text-white">4 - Very Important</SelectItem>
+              <SelectItem value="5" className="text-gray-900 dark:text-white">5 - Critical</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div>
+          <Label htmlFor="keyFigures" className="text-gray-700 dark:text-gray-300">Key Figures</Label>
+          <Input
+            id="keyFigures"
+            value={formData.keyFigures}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, keyFigures: e.target.value })}
+            className="border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+          />
+        </div>
+      </div>
+
+      <div>
+        <Label htmlFor="significance" className="text-gray-700 dark:text-gray-300">Significance</Label>
+        <Textarea
+          id="significance"
+          value={formData.significance}
+          onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setFormData({ ...formData, significance: e.target.value })}
+          rows={2}
+          className="border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+        />
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div>
+          <Label htmlFor="sourceBook" className="text-gray-700 dark:text-gray-300">Source Book</Label>
+          <Input
+            id="sourceBook"
+            value={formData.sourceBook}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, sourceBook: e.target.value })}
+            className="border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+          />
+        </div>
+
+        <div>
+          <Label htmlFor="chapterReference" className="text-gray-700 dark:text-gray-300">Chapter Reference</Label>
+          <Input
+            id="chapterReference"
+            value={formData.chapterReference}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, chapterReference: e.target.value })}
+            className="border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+          />
+        </div>
+
+        <div>
+          <Label htmlFor="pageNumber" className="text-gray-700 dark:text-gray-300">Page Number</Label>
+          <Input
+            id="pageNumber"
+            type="number"
+            value={formData.pageNumber || ''}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, pageNumber: e.target.value ? parseInt(e.target.value) : undefined })}
+            className="border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+          />
+        </div>
+      </div>
+
+      {/* Compact Image Upload Section */}
+      <div className="space-y-3">
+        <div>
+          <Label htmlFor="imageDescription" className="text-gray-700 dark:text-gray-300">Image Description</Label>
+          <Textarea
+            id="imageDescription"
+            value={formData.imageDescription}
+            onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setFormData({ ...formData, imageDescription: e.target.value })}
+            rows={2}
+            placeholder="Describe the image content..."
+            className="border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+          />
+        </div>
+
+        <div>
+          <Label className="text-gray-700 dark:text-gray-300">Event Image</Label>
+          <div className="mt-2 space-y-3">
+            {/* Compact Image Display */}
+            {formData.eventImage && (
+              <div className="relative">
+                <img 
+                  src={formData.eventImage} 
+                  alt="Event preview" 
+                  className="w-full h-32 object-cover rounded-lg border border-gray-300 dark:border-gray-600"
+                />
+                <Button
+                  type="button"
+                  variant="destructive"
+                  size="sm"
+                  className="absolute top-2 right-2"
+                  onClick={() => setFormData({ ...formData, eventImage: '' })}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+            )}
+
+            {/* Compact Upload Section */}
+            <div className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-4">
+              <div className="text-center">
+                <ImageIcon className="mx-auto h-8 w-8 text-gray-400" />
+                <div className="mt-2">
+                  <label htmlFor="image-upload" className="cursor-pointer">
+                    <span className="block text-sm font-medium text-gray-900 dark:text-gray-100">
+                      {isUploading ? 'Uploading...' : 'Upload an image'}
+                    </span>
+                    <span className="block text-xs text-gray-500 dark:text-gray-400">
+                      PNG, JPG, WEBP up to 10MB
+                    </span>
+                  </label>
+                  <input
+                    id="image-upload"
+                    type="file"
+                    accept="image/*"
+                    onChange={handleFileSelect}
+                    disabled={isUploading}
+                    className="sr-only"
+                  />
+                </div>
+                {!isUploading && (
+                  <div className="mt-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => document.getElementById('image-upload')?.click()}
+                      className="border-gray-300 dark:border-gray-600"
+                    >
+                      <Upload className="h-4 w-4 mr-2" />
+                      Choose File
+                    </Button>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="flex justify-end gap-3 pt-3 border-t border-gray-200 dark:border-gray-700">
+        <Button 
+          type="button" 
+          variant="outline" 
+          onClick={onCancel} 
+          className="border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+        >
+          Cancel
+        </Button>
+        <Button 
+          type="submit" 
+          className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-700"
+        >
+          <Save className="h-4 w-4 mr-2" />
+          {event ? 'Update Event' : 'Add Event'}
+        </Button>
+      </div>
+    </form>
+  );
+};
+
+const AdminTimelineManagement = () => {
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterPeriod, setFilterPeriod] = useState('all');
+  const [filterImportance, setFilterImportance] = useState('all');
+  const [sortBy, setSortBy] = useState('year');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+  const [isEditing, setIsEditing] = useState<string | null>(null);
+  const [isAdding, setIsAdding] = useState(false);
+  const [expandedEvents, setExpandedEvents] = useState<Set<string>>(new Set());
+  
+  const queryClient = useQueryClient();
+
+  // Fetch timeline events
+  const { data: events = [], isLoading, error } = useQuery({
+    queryKey: ['timeline-events'],
+    queryFn: async () => {
+      const response = await fetch('/api/timeline');
+      if (!response.ok) throw new Error('Failed to fetch timeline events');
+      return response.json();
+    }
+  });
+
+  // Add new event mutation
+  const addEventMutation = useMutation({
+    mutationFn: async (newEvent: Omit<TimelineEvent, 'id' | 'createdAt' | 'updatedAt'>) => {
+      const response = await fetch('/api/timeline', {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
+        },
+        body: JSON.stringify(newEvent)
+      });
+      if (!response.ok) throw new Error('Failed to create event');
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['timeline-events'] });
+      toast({ title: 'Success', description: 'Timeline event created successfully' });
+      setIsAdding(false);
+    },
+    onError: (error) => {
+      toast({ title: 'Error', description: error.message });
+    }
+  });
+
+  // Update event mutation
+  const updateEventMutation = useMutation({
+    mutationFn: async (updatedEvent: { id: string } & Partial<TimelineEvent>) => {
+      const response = await fetch(`/api/timeline/${updatedEvent.id}`, {
+        method: 'PUT',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
+        },
+        body: JSON.stringify(updatedEvent)
+      });
+      if (!response.ok) throw new Error('Failed to update event');
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['timeline-events'] });
+      toast({ title: 'Success', description: 'Timeline event updated successfully' });
+      setIsEditing(null);
+    },
+    onError: (error) => {
+      toast({ title: 'Error', description: error.message });
+    }
+  });
+
+  // Delete event mutation
+  const deleteEventMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const response = await fetch(`/api/timeline/${id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
+        }
+      });
+      if (!response.ok) throw new Error('Failed to delete event');
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['timeline-events'] });
+      toast({ title: 'Success', description: 'Timeline event deleted successfully' });
+    },
+    onError: (error) => {
+      toast({ title: 'Error', description: error.message });
+    }
+  });
+
+  // Filter and sort events
+  const filteredEvents = events
+    .filter((event: TimelineEvent) => {
+      const matchesSearch = event.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           event.description.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesPeriod = filterPeriod === 'all' || event.period === filterPeriod;
+      const matchesImportance = filterImportance === 'all' || event.importance.toString() === filterImportance;
+      return matchesSearch && matchesPeriod && matchesImportance;
+    })
+    .sort((a: TimelineEvent, b: TimelineEvent) => {
+      let comparison = 0;
+      switch (sortBy) {
+        case 'year':
+          comparison = parseInt(a.year) - parseInt(b.year);
+          break;
+        case 'title':
+          comparison = a.title.localeCompare(b.title);
+          break;
+        case 'importance':
+          comparison = a.importance - b.importance;
+          break;
+        default:
+          comparison = 0;
+      }
+      return sortOrder === 'asc' ? comparison : -comparison;
+    });
+
+  const toggleExpanded = (eventId: string) => {
+    const newExpanded = new Set(expandedEvents);
+    if (newExpanded.has(eventId)) {
+      newExpanded.delete(eventId);
+    } else {
+      newExpanded.add(eventId);
+    }
+    setExpandedEvents(newExpanded);
+  };
+
+  const handleEdit = (event: TimelineEvent) => {
+    setIsEditing(event.id);
+  };
+
+  const handleDelete = (eventId: string) => {
+    if (window.confirm('Are you sure you want to delete this event?')) {
+      deleteEventMutation.mutate(eventId);
+    }
+  };
+
+  const getPeriodColor = (period: string) => {
+    const colors: { [key: string]: string } = {
+      'medieval': 'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-300',
+      'legal': 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-300',
+      'political': 'bg-purple-100 text-purple-800 dark:bg-purple-900/20 dark:text-purple-300',
+      'royal': 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-300'
+    };
+    return colors[period] || 'bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-300';
+  };
+
+  const getImportanceColor = (importance: number) => {
+    const colors: { [key: number]: string } = {
+      1: 'bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-300',
+      2: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-300',
+      3: 'bg-orange-100 text-orange-800 dark:bg-orange-900/20 dark:text-orange-300',
+      4: 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-300',
+      5: 'bg-red-200 text-red-900 dark:bg-red-900/30 dark:text-red-200'
+    };
+    return colors[importance] || 'bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-300';
+  };
+
+  if (isLoading) {
+    return (
+      <AdminLayout>
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p className="text-gray-600 dark:text-gray-400">Loading timeline events...</p>
+          </div>
+        </div>
+      </AdminLayout>
+    );
+  }
+
+  if (error) {
+    return (
+      <AdminLayout>
+        <div className="flex items-center justify-center min-h-[400px]">
+          <Alert className="max-w-md">
+            <AlertDescription>
+              Error loading timeline events. Please try again.
+            </AlertDescription>
+          </Alert>
+        </div>
+      </AdminLayout>
+    );
+  }
+
+  return (
+    <AdminLayout>
+      <div className="container  max-w-7xl h-full flex flex-col">
+        {/* Compact Header */}
+        <div className="mb-4 flex-shrink-0">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+                Timeline Management
+              </h1>
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                Manage historical timeline events
+              </p>
+            </div>
+            <Button 
+              onClick={() => setIsAdding(true)}
+              className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-700"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Add Event
+            </Button>
+          </div>
+        </div>
+
+        {/* Compact Filters and Search */}
+        <Card className="mb-4 bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 flex-shrink-0 shadow-lg">
+          <CardContent className="p-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div>
+                <Label htmlFor="search" className="text-gray-700 dark:text-gray-300">Search</Label>
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 dark:text-gray-500" />
+                  <Input
+                    id="search"
+                    placeholder="Search events..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <Label htmlFor="period-filter" className="text-gray-700 dark:text-gray-300">Period</Label>
+                <Select value={filterPeriod} onValueChange={setFilterPeriod}>
+                  <SelectTrigger className="border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
+                    <SelectItem value="all" className="text-gray-900 dark:text-white">All Periods</SelectItem>
+                    <SelectItem value="medieval" className="text-gray-900 dark:text-white">Medieval</SelectItem>
+                    <SelectItem value="legal" className="text-gray-900 dark:text-white">Legal</SelectItem>
+                    <SelectItem value="political" className="text-gray-900 dark:text-white">Political</SelectItem>
+                    <SelectItem value="royal" className="text-gray-900 dark:text-white">Royal</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label htmlFor="importance-filter" className="text-gray-700 dark:text-gray-300">Importance</Label>
+                <Select value={filterImportance} onValueChange={setFilterImportance}>
+                  <SelectTrigger className="border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
+                    <SelectItem value="all" className="text-gray-900 dark:text-white">All Importance</SelectItem>
+                    <SelectItem value="1" className="text-gray-900 dark:text-white">1 - Minor</SelectItem>
+                    <SelectItem value="2" className="text-gray-900 dark:text-white">2 - Somewhat Important</SelectItem>
+                    <SelectItem value="3" className="text-gray-900 dark:text-white">3 - Important</SelectItem>
+                    <SelectItem value="4" className="text-gray-900 dark:text-white">4 - Very Important</SelectItem>
+                    <SelectItem value="5" className="text-gray-900 dark:text-white">5 - Critical</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label htmlFor="sort" className="text-gray-700 dark:text-gray-300">Sort By</Label>
+                <div className="flex gap-2">
+                  <Select value={sortBy} onValueChange={setSortBy}>
+                    <SelectTrigger className="border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
+                      <SelectItem value="year" className="text-gray-900 dark:text-white">Year</SelectItem>
+                      <SelectItem value="title" className="text-gray-900 dark:text-white">Title</SelectItem>
+                      <SelectItem value="importance" className="text-gray-900 dark:text-white">Importance</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
+                    className="border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+                  >
+                    {sortOrder === 'asc' ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Scrollable Events List */}
+        <div className="flex-1 overflow-y-auto">
+          <div className="space-y-3">
+          {filteredEvents.map((event: TimelineEvent) => (
+            <Card key={event.id} className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 shadow-lg">
+              <CardHeader>
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-3 mb-2">
+                      <Badge className={getPeriodColor(event.period)}>
+                        {event.period}
+                      </Badge>
+                      <Badge className={getImportanceColor(event.importance)}>
+                        <Star className="h-3 w-3 mr-1" />
+                        {event.importance}/5
+                      </Badge>
+                      {event.enhanced && (
+                        <Badge className="bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-300">
+                          Enhanced
+                        </Badge>
+                      )}
+                    </div>
+                    <CardTitle className="text-xl text-gray-900 dark:text-white mb-2">
+                      {event.title}
+                    </CardTitle>
+                    
+                    {/* Compact Event Image */}
+                    {event.eventImage && (
+                      <div className="mb-2">
+                        <img 
+                          src={event.eventImage} 
+                          alt={event.imageDescription || event.title}
+                          className="w-full h-32 object-cover rounded-lg border border-gray-200 dark:border-gray-600"
+                        />
+                        {event.imageDescription && (
+                          <p className="text-xs text-gray-600 dark:text-gray-400 mt-1 italic">
+                            {event.imageDescription}
+                          </p>
+                        )}
+                      </div>
+                    )}
+                    
+                    <div className="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-400">
+                      <div className="flex items-center gap-1">
+                        <Clock className="h-4 w-4" />
+                        {event.year}
+                      </div>
+                      {event.keyFigures && (
+                        <div className="flex items-center gap-1">
+                          <User className="h-4 w-4" />
+                          {event.keyFigures}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => toggleExpanded(event.id)}
+                      className="border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+                    >
+                      {expandedEvents.has(event.id) ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleEdit(event)}
+                      className="border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+                    >
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleDelete(event.id)}
+                      className="border-red-300 dark:border-red-600 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              </CardHeader>
+              
+              {expandedEvents.has(event.id) && (
+                <CardContent>
+                  <div className="space-y-3">
+                    <div>
+                      <h4 className="font-medium text-gray-900 dark:text-white mb-1">Description</h4>
+                      <p className="text-sm text-gray-700 dark:text-gray-300">{event.description}</p>
+                    </div>
+                    
+                    {event.details && (
+                      <div>
+                        <h4 className="font-medium text-gray-900 dark:text-white mb-1">Details</h4>
+                        <p className="text-sm text-gray-700 dark:text-gray-300">{event.details}</p>
+                      </div>
+                    )}
+                    
+                    {event.significance && (
+                      <div>
+                        <h4 className="font-medium text-gray-900 dark:text-white mb-1">Significance</h4>
+                        <p className="text-sm text-gray-700 dark:text-gray-300">{event.significance}</p>
+                      </div>
+                    )}
+                    
+                    {(event.sourceBook || event.chapterReference || event.pageNumber) && (
+                      <div>
+                        <h4 className="font-medium text-gray-900 dark:text-white mb-1">Source Information</h4>
+                        <div className="text-sm text-gray-700 dark:text-gray-300 space-y-1">
+                          {event.sourceBook && <p><strong>Book:</strong> {event.sourceBook}</p>}
+                          {event.chapterReference && <p><strong>Chapter:</strong> {event.chapterReference}</p>}
+                          {event.pageNumber && <p><strong>Page:</strong> {event.pageNumber}</p>}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              )}
+            </Card>
+          ))}
+
+          {filteredEvents.length === 0 && (
+            <Card className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
+              <CardContent className="text-center py-12">
+                <Calendar className="h-12 w-12 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">No Events Found</h3>
+                <p className="text-gray-600 dark:text-gray-400">
+                  {searchTerm || filterPeriod !== 'all' || filterImportance !== 'all' 
+                    ? 'Try adjusting your filters to see more events.'
+                    : 'Get started by adding your first timeline event.'
+                  }
+                </p>
+              </CardContent>
+            </Card>
+          )}
+          </div>
+        </div>
+
+        {/* Add/Edit Event Dialog */}
+        <Dialog open={isAdding || !!isEditing} onOpenChange={() => {
+          setIsAdding(false);
+          setIsEditing(null);
+        }}>
+          <DialogContent className="max-w-2xl bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
+            <DialogHeader>
+              <DialogTitle className="text-gray-900 dark:text-white">
+                {isAdding ? 'Add New Event' : 'Edit Event'}
+              </DialogTitle>
+              <DialogDescription className="text-gray-600 dark:text-gray-400">
+                {isAdding ? 'Create a new timeline event' : 'Update the timeline event details'}
+              </DialogDescription>
+            </DialogHeader>
+            
+            <EventForm
+              event={isEditing ? events.find((e: TimelineEvent) => e.id === isEditing) : undefined}
+              onSubmit={(eventData) => {
+                if (isEditing) {
+                  updateEventMutation.mutate({ id: isEditing, ...eventData });
+                } else {
+                  addEventMutation.mutate(eventData);
+                }
+              }}
+              onCancel={() => {
+                setIsAdding(false);
+                setIsEditing(null);
+              }}
+            />
+          </DialogContent>
+        </Dialog>
+      </div>
+    </AdminLayout>
+  );
+};
+
+export default AdminTimelineManagement;
