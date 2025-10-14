@@ -40,7 +40,6 @@ export default function GlobalTTSNarration() {
     speed,
     pitch,
     volume,
-    useAITTS,
     isMuted,
     autoPlayNext,
     autoPlayTriggered,
@@ -76,7 +75,6 @@ export default function GlobalTTSNarration() {
   const [isStartingPlayback, setIsStartingPlayback] = useState(false);
   const [allEvents, setAllEvents] = useState<any[]>([]);
   
-  const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const isInitializingPlayback = useRef(false);
 
@@ -89,11 +87,6 @@ export default function GlobalTTSNarration() {
       audioRef.current.pause();
       audioRef.current.currentTime = 0;
       audioRef.current.src = '';
-    }
-    
-    // Stop browser TTS
-    if (speechSynthesis.speaking) {
-      speechSynthesis.cancel();
     }
     
     // Reset all audio state
@@ -505,8 +498,7 @@ export default function GlobalTTSNarration() {
   // Get available voices for selected language
   const availableVoices = voiceOptions.filter(v => v.languageCode === selectedLanguage);
 
-  // Check if browser supports speech synthesis
-  const isSupported = 'speechSynthesis' in window;
+  // AI TTS is always supported when online
 
   // Check server availability
   const [serverAvailable, setServerAvailable] = useState<boolean | null>(null);
@@ -603,9 +595,6 @@ export default function GlobalTTSNarration() {
         audioRef.current.pause();
         audioRef.current.currentTime = 0;
       }
-      if (speechSynthesis.speaking) {
-        speechSynthesis.cancel();
-      }
       
       setIsUsingAITTS(false); // Reset TTS type flag
       pauseNarration();
@@ -683,9 +672,8 @@ export default function GlobalTTSNarration() {
         
         // Check if it's a server availability issue
         if (response.status === 404 || response.status === 500) {
-          console.log('🔄 Server not available, falling back to browser TTS');
-          updateSettings({ useAITTS: false });
-          throw new Error('AI TTS service not available, using browser TTS instead');
+          console.log('🔄 Server not available');
+          throw new Error('AI TTS service not available');
         }
         
         throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
@@ -794,32 +782,19 @@ export default function GlobalTTSNarration() {
       console.log('⏸️ Pausing current playback...');
       setAudioEndedNaturally(false); // Mark as manually paused
       
-      // Pause AI TTS audio if it exists (keep position)
+      // Pause AI TTS audio (keep position)
       if (audioRef.current) {
         audioRef.current.pause();
-      }
-      
-      // Pause browser TTS speech synthesis
-      if (speechSynthesis.speaking) {
-        speechSynthesis.pause();
       }
       
       pauseNarration();
       return;
     }
 
-    // If paused, resume from current position (only for AI TTS)
-    if (audioRef.current && audioRef.current.paused && audioRef.current.currentTime > 0 && isUsingAITTS) {
+    // If paused, resume from current position (AI TTS only)
+    if (audioRef.current && audioRef.current.paused && audioRef.current.currentTime > 0) {
       console.log('▶️ Resuming AI TTS from paused position');
       audioRef.current.play();
-      playNarration();
-      return;
-    }
-
-    // If browser TTS is paused, resume it (only if not using AI TTS)
-    if (speechSynthesis.paused && !isUsingAITTS) {
-      console.log('▶️ Resuming browser TTS from paused position');
-      speechSynthesis.resume();
       playNarration();
       return;
     }
@@ -840,7 +815,7 @@ export default function GlobalTTSNarration() {
       console.log('📋 Current event ID:', currentEventId);
       console.log('🎤 Selected voice:', selectedVoice);
       console.log('🌍 Selected language:', selectedLanguage);
-      console.log('🤖 Using AI TTS:', useAITTS);
+      console.log('🤖 Using AI TTS: true (always enabled)');
       console.log('🌐 Online status:', isOnline);
       
       const text = await generateNarrationText();
@@ -848,230 +823,160 @@ export default function GlobalTTSNarration() {
       setCurrentText(text);
       setTranslatedText(text);
 
-      // Try AI TTS first if enabled and online
-      if (useAITTS && isOnline) {
-        try {
-          let audioUrl = '';
+      // Always use AI TTS
+      if (!isOnline) {
+        setAudioError('AI TTS requires an internet connection. Please check your connection and try again.');
+        setLocalIsGeneratingDebug(false);
+        isInitializingPlayback.current = false;
+        return;
+      }
+
+      try {
+        let audioUrl = '';
+        
+        // Validate that the selected voice exists and is available for the current language
+        const voiceExists = voiceOptions.some(v => v.key === selectedVoice && v.languageCode === selectedLanguage);
+        if (!voiceExists) {
+          console.error(`❌ Voice validation failed: ${selectedVoice} not available for ${selectedLanguage}`);
+          console.log('Available voices for current language:', availableVoices.map(v => v.key));
           
-          // Validate that the selected voice exists and is available for the current language
-          const voiceExists = voiceOptions.some(v => v.key === selectedVoice && v.languageCode === selectedLanguage);
-          if (!voiceExists) {
-            console.error(`❌ Voice validation failed: ${selectedVoice} not available for ${selectedLanguage}`);
-            console.log('Available voices for current language:', availableVoices.map(v => v.key));
-            
-            // Try to find a fallback voice
-            const fallbackVoice = availableVoices[0];
-            if (fallbackVoice) {
-              console.log(`🔄 Using fallback voice: ${fallbackVoice.key}`);
-              updateSettings({ selectedVoice: fallbackVoice.key });
-              audioUrl = await generateAITTS(text, fallbackVoice.key);
-            } else {
-              throw new Error(`No voices available for language ${selectedLanguage}`);
-            }
+          // Try to find a fallback voice
+          const fallbackVoice = availableVoices[0];
+          if (fallbackVoice) {
+            console.log(`🔄 Using fallback voice: ${fallbackVoice.key}`);
+            updateSettings({ selectedVoice: fallbackVoice.key });
+            audioUrl = await generateAITTS(text, fallbackVoice.key);
           } else {
-            console.log(`✅ Voice validation passed: ${selectedVoice} for ${selectedLanguage}`);
-            console.log(`🎤 Selected voice details:`, selectedVoiceOption);
-            console.log(`🔑 Voice key being sent to API:`, selectedVoice);
-            audioUrl = await generateAITTS(text, selectedVoice);
+            throw new Error(`No voices available for language ${selectedLanguage}`);
           }
-          
-          // Validate that we have a valid audio URL
-          if (!audioUrl || audioUrl.trim() === '') {
-            throw new Error('No audio URL received from TTS service');
-          }
-          
-          setAudioUrl(audioUrl);
-          
-          // Create audio element for playback
-          const audio = new Audio();
-          audio.autoplay = false; // Prevent auto-play
-          audio.preload = 'auto'; // Preload the audio
-          audioRef.current = audio;
-          console.log('🎵 Created new audio element');
-          
-          // Set up simple event handlers
-          audio.onplay = () => {
-            console.log('🎵 AI TTS Audio started playing');
-            console.log('🔧 About to set localIsGenerating to false in onplay');
-            setLocalIsGeneratingDebug(false);
-            setIsStartingPlayback(false);
-            playNarration(); // Set the playing state when audio actually starts
-            
-            // Clear the initialization flag after a small delay to ensure audio is fully started
-            setTimeout(() => {
-              isInitializingPlayback.current = false;
-              console.log('🔧 Set isInitializingPlayback to false (delayed)');
-            }, 500);
-          };
-          
-          audio.onloadstart = () => {
-            console.log('🎵 Audio loading started');
-          };
-          
-          audio.oncanplay = () => {
-            console.log('🎵 Audio can start playing');
-          };
-          
-          audio.onpause = () => {
-            console.log('🎵 AI TTS Audio paused');
-            pauseNarration(); // This updates the context state
-          };
-          
-          audio.onended = () => {
-            console.log('🎵 AI TTS Audio ended naturally - triggering auto-play check');
-            setAudioEndedNaturally(true); // Mark as naturally ended in context
-            pauseNarration(); // This updates the context state
-            // The auto-play logic in TTSContext will handle the next event
-          };
-          
-          audio.onerror = (event) => {
-            console.error('Audio playback error:', event);
-            setAudioError(`Audio playback failed: ${audio.error?.message || 'Unknown error'}`);
-            setLocalIsGeneratingDebug(false);
-            isInitializingPlayback.current = false;
-            console.log('🔧 Set isInitializingPlayback to false (error)');
-            pauseNarration();
-          };
-          
-          audio.volume = isMuted ? 0 : volume;
-          
-          // Set the source and play
-          console.log('🎵 Setting audio source:', audioUrl);
-          
-          // Validate audio URL before proceeding
-          if (!audioUrl || audioUrl.trim() === '') {
-            throw new Error('Invalid audio URL: empty or undefined');
-          }
-          
-          // Ensure the audio URL is absolute
-          const absoluteAudioUrl = audioUrl.startsWith('http') ? audioUrl : `${window.location.origin}${audioUrl}`;
-          console.log('🎵 Absolute audio URL:', absoluteAudioUrl);
-          
-          // Additional validation for absolute URL
-          if (absoluteAudioUrl === window.location.origin || absoluteAudioUrl === window.location.origin + '/') {
-            throw new Error('Invalid audio URL: URL resolves to root path only');
-          }
-          
-          audio.src = absoluteAudioUrl;
-          
-          // Play the audio
-          try {
-            console.log('🎵 Starting AI TTS audio playback');
-            setIsUsingAITTS(true); // Mark that we're using AI TTS
-            setIsStartingPlayback(true); // Mark that we're starting playback
-            
-            // Add a small delay to prevent race conditions
-            await new Promise(resolve => setTimeout(resolve, 100));
-            
-            // Check if we're still supposed to be playing (not interrupted)
-            // Since we're generating, we should continue
-            console.log('🔍 Checking state before play:', { localIsGenerating, isPlaying, isStartingPlayback });
-            
-            await audio.play();
-            console.log('🎵 Audio play() called successfully');
-            return; // Success! Exit the function
-          } catch (playError) {
-            console.error('Audio play() failed:', playError);
-            setIsStartingPlayback(false); // Clear the starting flag
-            setLocalIsGeneratingDebug(false);
-            isInitializingPlayback.current = false;
-            console.log('🔧 Set isInitializingPlayback to false (play error)');
-            
-            // Don't show error for interrupted play requests
-            if ((playError as any)?.name === 'AbortError' || (playError as any)?.message?.includes('interrupted')) {
-              console.log('🎵 Audio play was interrupted (expected)');
-              return;
-            }
-            
-            setAudioError(`Failed to start audio playback: ${playError instanceof Error ? playError.message : 'Unknown error'}`);
-            setIsUsingAITTS(false); // Reset flag on failure
-            throw playError; // Re-throw to trigger fallback
-          }
-          
-        } catch (error) {
-          console.error('AI TTS failed, falling back to browser TTS:', error);
-          setAudioError(`AI TTS failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        } else {
+          console.log(`✅ Voice validation passed: ${selectedVoice} for ${selectedLanguage}`);
+          console.log(`🎤 Selected voice details:`, selectedVoiceOption);
+          console.log(`🔑 Voice key being sent to API:`, selectedVoice);
+          audioUrl = await generateAITTS(text, selectedVoice);
+        }
+        
+        // Validate that we have a valid audio URL
+        if (!audioUrl || audioUrl.trim() === '') {
+          throw new Error('No audio URL received from TTS service');
+        }
+        
+        setAudioUrl(audioUrl);
+        
+        // Create audio element for playback
+        const audio = new Audio();
+        audio.autoplay = false; // Prevent auto-play
+        audio.preload = 'auto'; // Preload the audio
+        audioRef.current = audio;
+        console.log('🎵 Created new audio element');
+        
+        // Set up simple event handlers
+        audio.onplay = () => {
+          console.log('🎵 AI TTS Audio started playing');
+          console.log('🔧 About to set localIsGenerating to false in onplay');
           setLocalIsGeneratingDebug(false);
           setIsStartingPlayback(false);
-          isInitializingPlayback.current = false;
-          console.log('🔧 Set isInitializingPlayback to false (AI TTS error)');
-          setIsUsingAITTS(false); // Reset flag since we're falling back
-          // Continue to browser TTS fallback
-        }
-      }
-      
-      // Fallback to browser TTS if AI TTS failed or is disabled
-      if ((!useAITTS || !isOnline) && !isUsingAITTS) {
-        console.log('🔄 Using browser TTS fallback');
-        // Use browser TTS
-        if (!isSupported) {
-          alert('Your browser does not support text-to-speech. Please use a modern browser like Chrome, Firefox, or Safari.');
-          setLocalIsGeneratingDebug(false);
-          return;
-        }
-
-        // Create new utterance
-        const utterance = new SpeechSynthesisUtterance(text);
-        utteranceRef.current = utterance;
-
-        // Set voice properties
-        utterance.rate = speed;
-        utterance.pitch = pitch;
-        utterance.volume = isMuted ? 0 : volume;
-
-        // Try to find a matching voice
-        const voices = speechSynthesis.getVoices();
-        let selectedVoiceObj = null;
-
-        if (selectedVoiceOption?.gender === 'male' && selectedVoiceOption?.accent === 'British') {
-          selectedVoiceObj = voices.find(v => 
-            v.name.toLowerCase().includes('male') || 
-            v.name.toLowerCase().includes('british') ||
-            v.name.toLowerCase().includes('uk')
-          );
-        } else if (selectedVoiceOption?.gender === 'female' && selectedVoiceOption?.accent === 'British') {
-          selectedVoiceObj = voices.find(v => 
-            v.name.toLowerCase().includes('female') || 
-            v.name.toLowerCase().includes('british') ||
-            v.name.toLowerCase().includes('uk')
-          );
-        }
-
-        if (selectedVoiceObj) {
-          utterance.voice = selectedVoiceObj;
-        }
-
-        // Set up event handlers - Call playNarration to update context state
-        utterance.onstart = () => {
-          console.log('🎵 Browser TTS started playing');
-          setLocalIsGeneratingDebug(false);
-          isInitializingPlayback.current = false;
-          setIsUsingAITTS(false); // Mark that we're using browser TTS
-          playNarration(); // This updates the context state
+          playNarration(); // Set the playing state when audio actually starts
+          
+          // Clear the initialization flag after a small delay to ensure audio is fully started
+          setTimeout(() => {
+            isInitializingPlayback.current = false;
+            console.log('🔧 Set isInitializingPlayback to false (delayed)');
+          }, 500);
         };
-
-        utterance.onend = () => {
-          console.log('🎵 Browser TTS ended naturally - triggering auto-play check');
+        
+        audio.onloadstart = () => {
+          console.log('🎵 Audio loading started');
+        };
+        
+        audio.oncanplay = () => {
+          console.log('🎵 Audio can start playing');
+        };
+        
+        audio.onpause = () => {
+          console.log('🎵 AI TTS Audio paused');
+          pauseNarration(); // This updates the context state
+        };
+        
+        audio.onended = () => {
+          console.log('🎵 AI TTS Audio ended naturally - triggering auto-play check');
           setAudioEndedNaturally(true); // Mark as naturally ended in context
           pauseNarration(); // This updates the context state
           // The auto-play logic in TTSContext will handle the next event
         };
-
-        utterance.onerror = (event) => {
-          console.error('Speech synthesis error:', event.error);
-          // Don't show error for "interrupted" as it's expected when changing voices
-          if (event.error !== 'interrupted') {
-            setAudioError(`Speech synthesis error: ${event.error}`);
-          }
+        
+        audio.onerror = (event) => {
+          console.error('Audio playback error:', event);
+          setAudioError(`Audio playback failed: ${audio.error?.message || 'Unknown error'}`);
           setLocalIsGeneratingDebug(false);
           isInitializingPlayback.current = false;
-          setIsUsingAITTS(false); // Reset flag on error
+          console.log('🔧 Set isInitializingPlayback to false (error)');
           pauseNarration();
         };
-
-        // Start speaking
-        console.log('🎵 Starting browser TTS with selected voice:', selectedVoiceObj?.name || 'default');
-        speechSynthesis.speak(utterance);
+        
+        audio.volume = isMuted ? 0 : volume;
+        
+        // Set the source and play
+        console.log('🎵 Setting audio source:', audioUrl);
+        
+        // Validate audio URL before proceeding
+        if (!audioUrl || audioUrl.trim() === '') {
+          throw new Error('Invalid audio URL: empty or undefined');
+        }
+        
+        // Ensure the audio URL is absolute
+        const absoluteAudioUrl = audioUrl.startsWith('http') ? audioUrl : `${window.location.origin}${audioUrl}`;
+        console.log('🎵 Absolute audio URL:', absoluteAudioUrl);
+        
+        // Additional validation for absolute URL
+        if (absoluteAudioUrl === window.location.origin || absoluteAudioUrl === window.location.origin + '/') {
+          throw new Error('Invalid audio URL: URL resolves to root path only');
+        }
+        
+        audio.src = absoluteAudioUrl;
+        
+        // Play the audio
+        try {
+          console.log('🎵 Starting AI TTS audio playback');
+          setIsUsingAITTS(true); // Mark that we're using AI TTS
+          setIsStartingPlayback(true); // Mark that we're starting playback
+          
+          // Add a small delay to prevent race conditions
+          await new Promise(resolve => setTimeout(resolve, 100));
+          
+          // Check if we're still supposed to be playing (not interrupted)
+          // Since we're generating, we should continue
+          console.log('🔍 Checking state before play:', { localIsGenerating, isPlaying, isStartingPlayback });
+          
+          await audio.play();
+          console.log('🎵 Audio play() called successfully');
+          return; // Success! Exit the function
+        } catch (playError) {
+          console.error('Audio play() failed:', playError);
+          setIsStartingPlayback(false); // Clear the starting flag
+          setLocalIsGeneratingDebug(false);
+          isInitializingPlayback.current = false;
+          console.log('🔧 Set isInitializingPlayback to false (play error)');
+          
+          // Don't show error for interrupted play requests
+          if ((playError as any)?.name === 'AbortError' || (playError as any)?.message?.includes('interrupted')) {
+            console.log('🎵 Audio play was interrupted (expected)');
+            return;
+          }
+          
+          setAudioError(`Failed to start audio playback: ${playError instanceof Error ? playError.message : 'Unknown error'}`);
+          setIsUsingAITTS(false); // Reset flag on failure
+          throw playError;
+        }
+        
+      } catch (error) {
+        console.error('AI TTS failed:', error);
+        setAudioError(`AI TTS failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        setLocalIsGeneratingDebug(false);
+        setIsStartingPlayback(false);
+        isInitializingPlayback.current = false;
+        console.log('🔧 Set isInitializingPlayback to false (AI TTS error)');
+        setIsUsingAITTS(false); // Reset flag on failure
       }
       
     } catch (error) {
@@ -1086,10 +991,8 @@ export default function GlobalTTSNarration() {
 
   const handleMute = () => {
     updateSettings({ isMuted: !isMuted });
-    if (useAITTS && audioRef.current) {
+    if (audioRef.current) {
       audioRef.current.volume = isMuted ? volume : 0;
-    } else if (utteranceRef.current) {
-      utteranceRef.current.volume = isMuted ? volume : 0;
     }
   };
 
@@ -1100,17 +1003,17 @@ export default function GlobalTTSNarration() {
     }
   };
 
-  if (!isSupported) {
+  if (!isOnline) {
     return (
       <Card className="fixed bottom-4 right-4 w-80 z-50 shadow-lg border border-gray-200 dark:border-gray-700">
         <CardHeader className="pb-3">
           <CardTitle className="text-sm text-gray-900 dark:text-white">
-            🎤 Voice Narration
+            🎤 AI Voice Narration
           </CardTitle>
         </CardHeader>
         <CardContent className="pt-0">
           <p className="text-sm text-gray-600 dark:text-gray-400">
-            Your browser doesn't support text-to-speech. Please use Chrome, Firefox, or Safari for voice narration.
+            AI TTS requires an internet connection. Please check your connection and try again.
           </p>
         </CardContent>
       </Card>
@@ -1122,32 +1025,19 @@ export default function GlobalTTSNarration() {
       <CardHeader className="pb-3">
         <div className="flex flex-col space-y-3 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
           <CardTitle className="text-sm flex items-center gap-2 text-gray-900 dark:text-white">
-            {useAITTS ? (
-              <Cloud className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-            ) : (
-              <User className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-            )}
-            <span className="truncate">Global Voice Narration</span>
+            <Cloud className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+            <span className="truncate">AI Voice Narration</span>
             {!isOnline && (
               <WifiOff className="h-4 w-4 text-red-500 flex-shrink-0" />
             )}
-            {isOnline && useAITTS && serverAvailable === true && (
+            {isOnline && serverAvailable === true && (
               <Wifi className="h-4 w-4 text-green-500 flex-shrink-0" />
             )}
-            {isOnline && useAITTS && serverAvailable === false && (
+            {isOnline && serverAvailable === false && (
               <WifiOff className="h-4 w-4 text-orange-500 flex-shrink-0" />
             )}
           </CardTitle>
           <div className="flex items-center gap-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => updateSettings({ useAITTS: !useAITTS })}
-              className="text-xs text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 px-2"
-              disabled={!isOnline}
-            >
-              {useAITTS ? 'Browser' : 'AI'}
-            </Button>
             <Button
               variant="ghost"
               size="sm"

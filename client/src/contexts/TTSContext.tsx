@@ -52,7 +52,6 @@ interface TTSContextType {
     speed: number;
     pitch: number;
     volume: number;
-    useAITTS: boolean;
     isMuted: boolean;
   }>) => void;
 }
@@ -99,11 +98,8 @@ export const TTSProvider: React.FC<TTSProviderProps> = ({ children }) => {
   const [volume, setVolume] = useState<number>(() => 
     parseFloat(localStorage.getItem('tts_volume') || '1')
   );
-  const [useAITTS, setUseAITTS] = useState<boolean>(() => {
-    const stored = localStorage.getItem('tts_use_ai');
-    // Default to true if not set (AI TTS is preferred)
-    return stored === null ? true : stored === 'true';
-  });
+  // Always use AI TTS
+  const useAITTS = true;
   const [isMuted, setIsMuted] = useState(false);
   
   // Auto-play settings
@@ -144,9 +140,6 @@ export const TTSProvider: React.FC<TTSProviderProps> = ({ children }) => {
     localStorage.setItem('tts_volume', volume.toString());
   }, [volume]);
   
-  useEffect(() => {
-    localStorage.setItem('tts_use_ai', useAITTS.toString());
-  }, [useAITTS]);
   
   useEffect(() => {
     localStorage.setItem('tts_auto_play', autoPlayNext.toString());
@@ -292,7 +285,6 @@ export const TTSProvider: React.FC<TTSProviderProps> = ({ children }) => {
     speed: number;
     pitch: number;
     volume: number;
-    useAITTS: boolean;
     isMuted: boolean;
   }>) => {
     if (settings.selectedLanguage !== undefined) setSelectedLanguage(settings.selectedLanguage);
@@ -300,7 +292,6 @@ export const TTSProvider: React.FC<TTSProviderProps> = ({ children }) => {
     if (settings.speed !== undefined) setSpeed(settings.speed);
     if (settings.pitch !== undefined) setPitch(settings.pitch);
     if (settings.volume !== undefined) setVolume(settings.volume);
-    if (settings.useAITTS !== undefined) setUseAITTS(settings.useAITTS);
     if (settings.isMuted !== undefined) setIsMuted(settings.isMuted);
   };
 

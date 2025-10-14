@@ -38,9 +38,9 @@ export default function ProgressRoadmap({ userId }: ProgressRoadmapProps) {
   };
 
   return (
-    <Card className="shadow-sm border border-gray-200 overflow-hidden">
-      <CardHeader className="border-b border-gray-200 p-2 sm:p-4">
-        <CardTitle className="text-base sm:text-lg font-semibold text-gray-900 flex items-center">
+    <Card className="shadow-sm border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 overflow-hidden">
+      <CardHeader className="border-b border-gray-200 dark:border-gray-700 p-2 sm:p-4">
+        <CardTitle className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white flex items-center">
           <Map className="text-success mr-2 sm:mr-3" size={18} />
           <span className="hidden sm:inline">Learning Roadmap</span>
           <span className="sm:hidden">Roadmap</span>
@@ -57,8 +57,8 @@ export default function ProgressRoadmap({ userId }: ProgressRoadmapProps) {
                 {getStatusIcon(progress)}
               </div>
               <div className="flex-1 min-w-0">
-                <h4 className="font-medium text-gray-900 text-xs sm:text-sm truncate">{module.title}</h4>
-                <p className="text-xs text-gray-600 mb-2 line-clamp-2">{module.description}</p>
+                <h4 className="font-medium text-gray-900 dark:text-white text-xs sm:text-sm truncate">{module.title}</h4>
+                <p className="text-xs text-gray-600 dark:text-gray-400 mb-2 line-clamp-2">{module.description}</p>
                 <div className="w-full">
                   <Progress value={progress} className="h-1 sm:h-1.5" />
                 </div>
