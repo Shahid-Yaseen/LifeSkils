@@ -1525,12 +1525,7 @@ export default function BrowserTTSNarration({
           </div>
         </div>
 
-        {/* Error Display */}
-        {audioError && (
-          <div className="text-xs text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 p-2 rounded border border-red-200 dark:border-red-800">
-            <strong className="text-red-900 dark:text-red-300">Error:</strong> {audioError}
-          </div>
-        )}
+       
 
         {/* Audio URL Display */}
         {audioUrl && useAITTS && (

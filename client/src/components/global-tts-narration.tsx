@@ -1233,16 +1233,7 @@ export default function GlobalTTSNarration() {
               {isMuted ? 'Unmute' : 'Mute'}
             </Button>
             
-            {eventQueue.length > 0 && (
-              <Button
-                onClick={handleSkipNext}
-                variant="outline"
-                size="sm"
-                className="border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 p-2"
-              >
-                <SkipForward className="h-4 w-4" />
-              </Button>
-            )}
+            
           </div>
           
         </div>
