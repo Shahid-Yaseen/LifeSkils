@@ -89,8 +89,13 @@ export default function EventNavigation({ allEvents: propEvents = [] }: EventNav
   }
 
   return (
-    <Card className="shadow-sm border border-gray-200 dark:border-gray-700">
-      
+    <Card className="shadow-sm border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
+      <CardHeader className="pb-3">
+        <CardTitle className="text-sm flex items-center gap-2 text-gray-900 dark:text-white">
+          <Calendar className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+          <span className="truncate">Event Navigation</span>
+        </CardTitle>
+      </CardHeader>
       <CardContent className="pt-0">
         {/* Current Event Info */}
         <div className="mb-2 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
