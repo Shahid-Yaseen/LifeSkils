@@ -1,17 +1,9 @@
 import { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Loader2, Volume2, VolumeX, Play, Pause, User, Settings, Cloud, Wifi, WifiOff, Globe, Languages } from 'lucide-react';
+import { Loader2, Volume2, VolumeX, Play, Pause, User, Settings, Cloud, Wifi, WifiOff, Globe, Languages, SkipForward } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-
-interface BrowserTTSNarrationProps {
-  eventId: string;
-  title: string;
-  description: string;
-  details?: string;
-  onAudioGenerated?: (audioUrl: string) => void;
-  onPlaybackChange?: (isPlaying: boolean) => void;
-}
+import { useTTS } from '@/contexts/TTSContext';
 
 interface VoiceOption {
   key: string;
@@ -34,36 +26,84 @@ interface LanguageOption {
   voices: string[];
 }
 
-export default function BrowserTTSNarration({ 
-  eventId, 
-  title, 
-  description, 
-  details,
-  onAudioGenerated, 
-  onPlaybackChange 
-}: BrowserTTSNarrationProps) {
-  const [selectedLanguage, setSelectedLanguage] = useState<string>('en');
-  const [selectedVoice, setSelectedVoice] = useState<string>('british_female');
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [isMuted, setIsMuted] = useState(false);
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [isTranslating, setIsTranslating] = useState(false);
-  const [currentText, setCurrentText] = useState('');
-  const [translatedText, setTranslatedText] = useState('');
+export default function GlobalTTSNarration() {
+  const {
+    currentEventId,
+    currentTitle,
+    currentDescription,
+    currentDetails,
+    isPlaying,
+    isGenerating,
+    isTranslating,
+    selectedLanguage,
+    selectedVoice,
+    speed,
+    pitch,
+    volume,
+    useAITTS,
+    isMuted,
+    autoPlayNext,
+    autoPlayTriggered,
+    audioEndedNaturally,
+    eventQueue,
+    playNarration,
+    pauseNarration,
+    stopNarration,
+    setAutoPlayNext,
+    setAutoPlayTriggered,
+    setAudioEndedNaturally,
+    refillQueueFromCurrentEvent,
+    updateSettings,
+  } = useTTS();
+
   const [showSettings, setShowSettings] = useState(false);
-  const [speed, setSpeed] = useState(1);
-  const [pitch, setPitch] = useState(1);
-  const [volume, setVolume] = useState(1);
-  const [useAITTS, setUseAITTS] = useState(true);
   const [audioUrl, setAudioUrl] = useState<string>('');
   const [audioError, setAudioError] = useState<string>('');
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [isAudioLoading, setIsAudioLoading] = useState(false);
   const [cachedAudioUrl, setCachedAudioUrl] = useState<string>('');
   const [translationError, setTranslationError] = useState<string>('');
+  const [currentText, setCurrentText] = useState('');
+  const [translatedText, setTranslatedText] = useState('');
+  const [localIsGenerating, setLocalIsGenerating] = useState(false);
+  
+  // Debug wrapper for setLocalIsGenerating
+  const setLocalIsGeneratingDebug = (value: boolean) => {
+    console.log('🔧 setLocalIsGenerating called with:', value, 'from:', new Error().stack?.split('\n')[2]);
+    setLocalIsGenerating(value);
+  };
+  const [isUsingAITTS, setIsUsingAITTS] = useState(false);
+  const [isStartingPlayback, setIsStartingPlayback] = useState(false);
+  const [allEvents, setAllEvents] = useState<any[]>([]);
   
   const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const isInitializingPlayback = useRef(false);
+
+  // Global audio cleanup function
+  const cleanupAllAudio = () => {
+    console.log('🧹 Cleaning up all audio...');
+    
+    // Stop AI TTS audio
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
+      audioRef.current.src = '';
+    }
+    
+    // Stop browser TTS
+    if (speechSynthesis.speaking) {
+      speechSynthesis.cancel();
+    }
+    
+    // Reset all audio state
+    setIsUsingAITTS(false);
+    setAudioUrl('');
+    setCachedAudioUrl('');
+    setAudioError('');
+    setLocalIsGeneratingDebug(false);
+    setIsStartingPlayback(false);
+  };
 
   // Language options with flags and native names
   const languageOptions: LanguageOption[] = [
@@ -79,14 +119,7 @@ export default function BrowserTTSNarration({
     { code: 'ko', name: 'Korean', nativeName: '한국어', flag: '🇰🇷', voices: ['korean_male', 'korean_female'] },
     { code: 'ar', name: 'Arabic', nativeName: 'العربية', flag: '🇸🇦', voices: ['arabic_male', 'arabic_female'] },
     { code: 'hi', name: 'Hindi', nativeName: 'हिन्दी', flag: '🇮🇳', voices: ['hindi_male', 'hindi_female'] },
-    { code: 'ur', name: 'Urdu', nativeName: 'اردو', flag: '🇵🇰', voices: ['urdu_male', 'urdu_female'] },
-    { code: 'bn', name: 'Bengali', nativeName: 'বাংলা', flag: '🇧🇩', voices: ['bengali_male', 'bengali_female'] },
-    { code: 'tr', name: 'Turkish', nativeName: 'Türkçe', flag: '🇹🇷', voices: ['turkish_male', 'turkish_female'] },
-    { code: 'pl', name: 'Polish', nativeName: 'Polski', flag: '🇵🇱', voices: ['polish_male', 'polish_female'] },
-    { code: 'nl', name: 'Dutch', nativeName: 'Nederlands', flag: '🇳🇱', voices: ['dutch_male', 'dutch_female'] },
-    { code: 'sv', name: 'Swedish', nativeName: 'Svenska', flag: '🇸🇪', voices: ['swedish_male', 'swedish_female'] },
-    { code: 'no', name: 'Norwegian', nativeName: 'Norsk', flag: '🇳🇴', voices: ['norwegian_male', 'norwegian_female'] },
-    { code: 'da', name: 'Danish', nativeName: 'Dansk', flag: '🇩🇰', voices: ['danish_male', 'danish_female'] }
+    { code: 'ur', name: 'Urdu', nativeName: 'اردو', flag: '🇵🇰', voices: ['urdu_male', 'urdu_female'] }
   ];
 
   // Enhanced voice options with multilingual support
@@ -464,181 +497,6 @@ export default function BrowserTTSNarration({
       language: 'Urdu',
       languageCode: 'ur'
     },
-    // Bengali voices
-    {
-      key: 'bengali_male',
-      name: 'Rahul (Bengali Male)',
-      description: 'Warm Bengali male voice',
-      accent: 'Bengali',
-      gender: 'male',
-      characteristics: 'Friendly, engaging, educational',
-      speed: 0.95,
-      pitch: 0.9,
-      language: 'Bengali',
-      languageCode: 'bn'
-    },
-    {
-      key: 'bengali_female',
-      name: 'Maya (Bengali Female)',
-      description: 'Melodious Bengali female voice',
-      accent: 'Bengali',
-      gender: 'female',
-      characteristics: 'Clear, engaging, professional',
-      speed: 1,
-      pitch: 1.1,
-      language: 'Bengali',
-      languageCode: 'bn'
-    },
-    // Turkish voices
-    {
-      key: 'turkish_male',
-      name: 'Mehmet (Turkish Male)',
-      description: 'Strong Turkish male voice',
-      accent: 'Turkish',
-      gender: 'male',
-      characteristics: 'Authoritative, clear, engaging',
-      speed: 0.9,
-      pitch: 0.9,
-      language: 'Turkish',
-      languageCode: 'tr'
-    },
-    {
-      key: 'turkish_female',
-      name: 'Ayşe (Turkish Female)',
-      description: 'Clear Turkish female voice',
-      accent: 'Turkish',
-      gender: 'female',
-      characteristics: 'Professional, engaging, educational',
-      speed: 0.95,
-      pitch: 1.1,
-      language: 'Turkish',
-      languageCode: 'tr'
-    },
-    // Polish voices
-    {
-      key: 'polish_male',
-      name: 'Piotr (Polish Male)',
-      description: 'Clear Polish male voice',
-      accent: 'Polish',
-      gender: 'male',
-      characteristics: 'Professional, engaging, educational',
-      speed: 0.9,
-      pitch: 0.9,
-      language: 'Polish',
-      languageCode: 'pl'
-    },
-    {
-      key: 'polish_female',
-      name: 'Anna (Polish Female)',
-      description: 'Melodious Polish female voice',
-      accent: 'Polish',
-      gender: 'female',
-      characteristics: 'Clear, engaging, professional',
-      speed: 0.95,
-      pitch: 1.1,
-      language: 'Polish',
-      languageCode: 'pl'
-    },
-    // Dutch voices
-    {
-      key: 'dutch_male',
-      name: 'Jan (Dutch Male)',
-      description: 'Clear Dutch male voice',
-      accent: 'Dutch',
-      gender: 'male',
-      characteristics: 'Direct, professional, educational',
-      speed: 0.95,
-      pitch: 0.9,
-      language: 'Dutch',
-      languageCode: 'nl'
-    },
-    {
-      key: 'dutch_female',
-      name: 'Emma (Dutch Female)',
-      description: 'Friendly Dutch female voice',
-      accent: 'Dutch',
-      gender: 'female',
-      characteristics: 'Clear, engaging, professional',
-      speed: 1,
-      pitch: 1.1,
-      language: 'Dutch',
-      languageCode: 'nl'
-    },
-    // Swedish voices
-    {
-      key: 'swedish_male',
-      name: 'Erik (Swedish Male)',
-      description: 'Clear Swedish male voice',
-      accent: 'Swedish',
-      gender: 'male',
-      characteristics: 'Professional, engaging, educational',
-      speed: 0.9,
-      pitch: 0.9,
-      language: 'Swedish',
-      languageCode: 'sv'
-    },
-    {
-      key: 'swedish_female',
-      name: 'Astrid (Swedish Female)',
-      description: 'Melodious Swedish female voice',
-      accent: 'Swedish',
-      gender: 'female',
-      characteristics: 'Clear, engaging, professional',
-      speed: 0.95,
-      pitch: 1.1,
-      language: 'Swedish',
-      languageCode: 'sv'
-    },
-    // Norwegian voices
-    {
-      key: 'norwegian_male',
-      name: 'Lars (Norwegian Male)',
-      description: 'Clear Norwegian male voice',
-      accent: 'Norwegian',
-      gender: 'male',
-      characteristics: 'Professional, engaging, educational',
-      speed: 0.9,
-      pitch: 0.9,
-      language: 'Norwegian',
-      languageCode: 'no'
-    },
-    {
-      key: 'norwegian_female',
-      name: 'Ingrid (Norwegian Female)',
-      description: 'Melodious Norwegian female voice',
-      accent: 'Norwegian',
-      gender: 'female',
-      characteristics: 'Clear, engaging, professional',
-      speed: 0.95,
-      pitch: 1.1,
-      language: 'Norwegian',
-      languageCode: 'no'
-    },
-    // Danish voices
-    {
-      key: 'danish_male',
-      name: 'Søren (Danish Male)',
-      description: 'Clear Danish male voice',
-      accent: 'Danish',
-      gender: 'male',
-      characteristics: 'Professional, engaging, educational',
-      speed: 0.9,
-      pitch: 0.9,
-      language: 'Danish',
-      languageCode: 'da'
-    },
-    {
-      key: 'danish_female',
-      name: 'Freja (Danish Female)',
-      description: 'Melodious Danish female voice',
-      accent: 'Danish',
-      gender: 'female',
-      characteristics: 'Clear, engaging, professional',
-      speed: 0.95,
-      pitch: 1.1,
-      language: 'Danish',
-      languageCode: 'da'
-    }
   ];
 
   const selectedVoiceOption = voiceOptions.find(v => v.key === selectedVoice);
@@ -646,15 +504,6 @@ export default function BrowserTTSNarration({
 
   // Get available voices for selected language
   const availableVoices = voiceOptions.filter(v => v.languageCode === selectedLanguage);
-  
-  // Debug logging (can be removed in production)
-  // console.log('🔍 Component state:', {
-  //   selectedVoice,
-  //   selectedLanguage,
-  //   selectedVoiceOption: selectedVoiceOption?.name || 'Not found',
-  //   availableVoicesCount: availableVoices.length,
-  //   availableVoiceKeys: availableVoices.map(v => v.key)
-  // });
 
   // Check if browser supports speech synthesis
   const isSupported = 'speechSynthesis' in window;
@@ -679,84 +528,6 @@ export default function BrowserTTSNarration({
     checkServerAvailability();
   }, []);
 
-  // AI Translation function
-  const translateText = async (text: string, targetLanguage: string): Promise<string> => {
-    try {
-      setIsTranslating(true);
-      setTranslationError('');
-
-      // Check cache first
-      const cacheKey = `translation_${eventId}_${targetLanguage}_${text.length}`;
-      const cached = localStorage.getItem(cacheKey);
-      if (cached) {
-        const cachedData = JSON.parse(cached);
-        if (Date.now() - cachedData.timestamp < 24 * 60 * 60 * 1000) { // 24 hours
-          console.log('🌍 Using cached translation');
-          setIsTranslating(false);
-          return cachedData.translation;
-        }
-      }
-
-      console.log('🌍 Translating text to', targetLanguage);
-      const response = await fetch('/api/translate', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          text,
-          targetLanguage,
-          sourceLanguage: 'en', // Assuming source is English
-          context: 'historical_education',
-          preserveFormatting: true
-        }),
-      });
-
-      if (!response.ok) {
-        if (response.status === 404) {
-          throw new Error('Translation service not available. Please use English or contact support.');
-        }
-        throw new Error(`Translation failed: ${response.status}`);
-      }
-
-      const result = await response.json();
-      if (!result.success) {
-        throw new Error(result.error || 'Translation failed');
-      }
-      console.log('✅ Translation completed:', result.translation);
-      
-      // Cache the translation
-      const cacheData = {
-        translation: result.translation,
-        timestamp: Date.now(),
-        sourceText: text.substring(0, 100)
-      };
-      localStorage.setItem(cacheKey, JSON.stringify(cacheData));
-      
-      setIsTranslating(false);
-      return result.translation;
-    } catch (error) {
-      console.error('Translation error:', error);
-      setTranslationError(`Translation failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
-      setIsTranslating(false);
-      return text; // Return original text if translation fails
-    }
-  };
-
-  // Initialize voice selection on mount and handle language changes
-  useEffect(() => {
-    const availableVoicesForLanguage = voiceOptions.filter(v => v.languageCode === selectedLanguage);
-    if (availableVoicesForLanguage.length > 0) {
-      const firstVoice = availableVoicesForLanguage[0];
-      // Only update if current voice is not available for the selected language
-      const currentVoiceAvailable = availableVoicesForLanguage.some(v => v.key === selectedVoice);
-      if (!currentVoiceAvailable) {
-        console.log(`🔄 Switching voice from ${selectedVoice} to ${firstVoice.key} for language ${selectedLanguage}`);
-        setSelectedVoice(firstVoice.key);
-      }
-    }
-  }, [selectedLanguage]); // Removed selectedVoice from dependencies to prevent infinite loop
-
   // Monitor online/offline status
   useEffect(() => {
     const handleOnline = () => setIsOnline(true);
@@ -771,61 +542,85 @@ export default function BrowserTTSNarration({
     };
   }, []);
 
+  // Fetch all events for continuous auto-play
   useEffect(() => {
-    if (!isSupported) return;
-
-    const handleEnd = () => {
-      setIsPlaying(false);
-      onPlaybackChange?.(false);
-    };
-
-    const handleStart = () => {
-      setIsPlaying(true);
-      onPlaybackChange?.(true);
-    };
-
-    const handleError = () => {
-      setIsPlaying(false);
-      onPlaybackChange?.(false);
-    };
-
-    // Set up event listeners
-    if (utteranceRef.current) {
-      utteranceRef.current.onend = handleEnd;
-      utteranceRef.current.onstart = handleStart;
-      utteranceRef.current.onerror = handleError;
-    }
-
-    return () => {
-      if (utteranceRef.current) {
-        utteranceRef.current.onend = null;
-        utteranceRef.current.onstart = null;
-        utteranceRef.current.onerror = null;
+    const fetchEvents = async () => {
+      try {
+        const response = await fetch('/api/timeline');
+        if (response.ok) {
+          const events = await response.json();
+          setAllEvents(events);
+          console.log(`🎵 Loaded ${events.length} events for continuous auto-play`);
+        }
+      } catch (error) {
+        console.error('Failed to fetch events for auto-play:', error);
       }
     };
-  }, [isSupported, onPlaybackChange]);
+    
+    fetchEvents();
+  }, []);
 
-  // Cleanup effect - stop any playing audio when component unmounts
+  // Auto-play next event when triggered
   useEffect(() => {
-    return () => {
-      console.log('🧹 Component unmounting, cleaning up audio...');
+    if (autoPlayTriggered && currentEventId && !isPlaying && !localIsGenerating && !isStartingPlayback) {
+      console.log('🎵 Auto-play triggered for next event:', currentEventId, currentTitle);
+      setAutoPlayTriggered(false); // Reset the trigger
       
-      // Stop AI TTS audio
+      // Stop any existing audio first
+      cleanupAllAudio();
+      
+      // Small delay to ensure state is properly updated
+      setTimeout(() => {
+        handlePlay();
+      }, 300);
+    }
+  }, [autoPlayTriggered, currentEventId, isPlaying, localIsGenerating, isStartingPlayback]);
+
+  // Handle continuous auto-play when queue is empty
+  useEffect(() => {
+    if (!isPlaying && autoPlayNext && eventQueue.length === 0 && currentEventId && allEvents.length > 0 && !localIsGenerating && !isStartingPlayback) {
+      console.log('🎵 Queue empty, refilling for continuous auto-play...');
+      refillQueueFromCurrentEvent(allEvents);
+    }
+  }, [isPlaying, autoPlayNext, eventQueue.length, currentEventId, allEvents, localIsGenerating, isStartingPlayback, refillQueueFromCurrentEvent]);
+
+  // Track previous voice and language to detect changes
+  const prevVoiceRef = useRef(selectedVoice);
+  const prevLanguageRef = useRef(selectedLanguage);
+  
+  // Stop playback when voice or language changes (but not during initialization)
+  useEffect(() => {
+    const voiceChanged = prevVoiceRef.current !== selectedVoice;
+    const languageChanged = prevLanguageRef.current !== selectedLanguage;
+    
+    console.log('🔍 useEffect triggered - voiceChanged:', voiceChanged, 'languageChanged:', languageChanged, 'isPlaying:', isPlaying, 'isInitializingPlayback:', isInitializingPlayback.current);
+    
+    if ((voiceChanged || languageChanged) && isPlaying && !isInitializingPlayback.current) {
+      console.log('🔄 Voice/language changed, stopping current playback');
+      
+      // Stop any playing audio
       if (audioRef.current) {
         audioRef.current.pause();
         audioRef.current.currentTime = 0;
       }
-      
-      // Stop browser TTS
       if (speechSynthesis.speaking) {
         speechSynthesis.cancel();
       }
-    };
-  }, []);
+      
+      setIsUsingAITTS(false); // Reset TTS type flag
+      pauseNarration();
+    }
+    
+    // Update refs
+    prevVoiceRef.current = selectedVoice;
+    prevLanguageRef.current = selectedLanguage;
+  }, [selectedVoice, selectedLanguage, isPlaying]);
 
   // Check for cached audio
   const getCachedAudioKey = (text: string, voiceKey: string) => {
-    return `tts_${eventId}_${voiceKey}_${text.length}`;
+    // Create a more specific cache key that includes voice and language
+    const textHash = text.substring(0, 50).replace(/[^a-zA-Z0-9]/g, '');
+    return `tts_${currentEventId}_${voiceKey}_${selectedLanguage}_${textHash}`;
   };
 
   // Check if audio is cached in localStorage
@@ -864,7 +659,9 @@ export default function BrowserTTSNarration({
 
       console.log('🎤 Generating new AI narration...');
       console.log('🔍 Sending voice key:', voiceKey);
+      console.log('🔍 Current language:', selectedLanguage);
       console.log('🔍 Available voices for current language:', availableVoices.map(v => v.key));
+      console.log('🔍 Selected voice option:', selectedVoiceOption);
       
       const response = await fetch('/api/tts-enhanced/narrate', {
         method: 'POST',
@@ -874,7 +671,7 @@ export default function BrowserTTSNarration({
         body: JSON.stringify({
           text,
           voiceKey,
-          eventId,
+          eventId: currentEventId,
           enhanceForHistory: true,
           addEmphasis: true
         }),
@@ -887,7 +684,7 @@ export default function BrowserTTSNarration({
         // Check if it's a server availability issue
         if (response.status === 404 || response.status === 500) {
           console.log('🔄 Server not available, falling back to browser TTS');
-          setUseAITTS(false);
+          updateSettings({ useAITTS: false });
           throw new Error('AI TTS service not available, using browser TTS instead');
         }
         
@@ -911,171 +708,148 @@ export default function BrowserTTSNarration({
     }
   };
 
-  const generateNarrationText = async (): Promise<string> => {
-    const voice = selectedVoiceOption;
-    const language = selectedLanguageOption;
-    let intro = '';
-    
-    // Generate language-specific introductions
-    const introductions: { [key: string]: { [key: string]: string } } = {
-      en: {
-        british_male: "Good day! I'm James, your British narrator. ",
-        british_female: "Hello! I'm Emma, your British guide. ",
-        american_male: "Hey there! I'm Michael, your American narrator. ",
-        american_female: "Hi! I'm Sarah, your American guide. ",
-        historian_male: "Greetings. I am Professor Williams, your scholarly guide. ",
-        storyteller_female: "Welcome, dear listener. I am Lady Catherine, your storyteller. ",
-        default: "Hello! I'm your narrator. "
-      },
-      es: {
-        spanish_male: "¡Buenos días! Soy Carlos, su narrador español. ",
-        spanish_female: "¡Hola! Soy Isabella, su guía española. ",
-        default: "¡Hola! Soy su narrador. "
-      },
-      fr: {
-        french_male: "Bonjour! Je suis Pierre, votre narrateur français. ",
-        french_female: "Bonjour! Je suis Marie, votre guide française. ",
-        default: "Bonjour! Je suis votre narrateur. "
-      },
-      de: {
-        german_male: "Guten Tag! Ich bin Hans, Ihr deutscher Erzähler. ",
-        german_female: "Hallo! Ich bin Greta, Ihre deutsche Führerin. ",
-        default: "Hallo! Ich bin Ihr Erzähler. "
-      },
-      it: {
-        italian_male: "Buongiorno! Sono Marco, il vostro narratore italiano. ",
-        italian_female: "Ciao! Sono Sofia, la vostra guida italiana. ",
-        default: "Ciao! Sono il vostro narratore. "
-      },
-      pt: {
-        portuguese_male: "Bom dia! Sou João, seu narrador português. ",
-        portuguese_female: "Olá! Sou Ana, sua guia portuguesa. ",
-        default: "Olá! Sou seu narrador. "
-      },
-      ru: {
-        russian_male: "Добрый день! Я Дмитрий, ваш русский рассказчик. ",
-        russian_female: "Привет! Я Наташа, ваш русский гид. ",
-        default: "Привет! Я ваш рассказчик. "
-      },
-      zh: {
-        chinese_male: "你好！我是伟，您的中文叙述者。",
-        chinese_female: "你好！我是李，您的中文导游。",
-        default: "你好！我是您的叙述者。"
-      },
-      ja: {
-        japanese_male: "こんにちは！私は広志、あなたの日本語ナレーターです。",
-        japanese_female: "こんにちは！私は雪、あなたの日本語ガイドです。",
-        default: "こんにちは！私はあなたのナレーターです。"
-      },
-      ko: {
-        korean_male: "안녕하세요! 저는 민, 당신의 한국어 내레이터입니다.",
-        korean_female: "안녕하세요! 저는 지, 당신의 한국어 가이드입니다.",
-        default: "안녕하세요! 저는 당신의 내레이터입니다."
-      },
-      ar: {
-        arabic_male: "مرحباً! أنا أحمد، راويك العربي.",
-        arabic_female: "مرحباً! أنا فاطمة، مرشدتك العربية.",
-        default: "مرحباً! أنا راويك."
-      },
-      hi: {
-        hindi_male: "नमस्ते! मैं राज, आपका हिंदी वर्णनकर्ता हूँ।",
-        hindi_female: "नमस्ते! मैं प्रिया, आपकी हिंदी गाइड हूँ।",
-        default: "नमस्ते! मैं आपका वर्णनकर्ता हूँ।"
-      },
-      ur: {
-        urdu_male: "السلام علیکم! میں علی، آپ کا اردو راوی ہوں۔",
-        urdu_female: "السلام علیکم! میں عائشہ، آپ کی اردو گائیڈ ہوں۔",
-        default: "السلام علیکم! میں آپ کا راوی ہوں۔"
-      },
-      bn: {
-        bengali_male: "নমস্কার! আমি রাহুল, আপনার বাংলা বর্ণনাকারী।",
-        bengali_female: "নমস্কার! আমি মায়া, আপনার বাংলা গাইড।",
-        default: "নমস্কার! আমি আপনার বর্ণনাকারী।"
-      },
-      tr: {
-        turkish_male: "Merhaba! Ben Mehmet, Türkçe anlatıcınız.",
-        turkish_female: "Merhaba! Ben Ayşe, Türkçe rehberiniz.",
-        default: "Merhaba! Ben anlatıcınız."
-      },
-      pl: {
-        polish_male: "Dzień dobry! Jestem Piotr, wasz polski narrator.",
-        polish_female: "Cześć! Jestem Anna, wasza polska przewodniczka.",
-        default: "Cześć! Jestem waszym narratorem."
-      },
-      nl: {
-        dutch_male: "Goedendag! Ik ben Jan, uw Nederlandse verteller.",
-        dutch_female: "Hallo! Ik ben Emma, uw Nederlandse gids.",
-        default: "Hallo! Ik ben uw verteller."
-      },
-      sv: {
-        swedish_male: "God dag! Jag är Erik, er svenska berättare.",
-        swedish_female: "Hej! Jag är Astrid, er svenska guide.",
-        default: "Hej! Jag är er berättare."
-      },
-      no: {
-        norwegian_male: "God dag! Jeg er Lars, deres norske forteller.",
-        norwegian_female: "Hei! Jeg er Ingrid, deres norske guide.",
-        default: "Hei! Jeg er deres forteller."
-      },
-      da: {
-        danish_male: "God dag! Jeg er Søren, jeres danske fortæller.",
-        danish_female: "Hej! Jeg er Freja, jeres danske guide.",
-        default: "Hej! Jeg er jeres fortæller."
+  // AI Translation function (same as original)
+  const translateText = async (text: string, targetLanguage: string): Promise<string> => {
+    try {
+      setTranslationError('');
+
+      // Check cache first
+      const cacheKey = `translation_${currentEventId}_${targetLanguage}_${text.length}`;
+      const cached = localStorage.getItem(cacheKey);
+      if (cached) {
+        const cachedData = JSON.parse(cached);
+        if (Date.now() - cachedData.timestamp < 24 * 60 * 60 * 1000) { // 24 hours
+          console.log('🌍 Using cached translation');
+          return cachedData.translation;
+        }
       }
-    };
 
-    // Get introduction for current voice and language
-    const langIntros = introductions[selectedLanguage] || introductions.en;
-    intro = langIntros[selectedVoice] || langIntros.default;
+      console.log('🌍 Translating text to', targetLanguage);
+      const response = await fetch('/api/translate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          text,
+          targetLanguage,
+          sourceLanguage: 'en',
+          context: 'historical_education',
+          preserveFormatting: true
+        }),
+      });
 
-    // Generate main content
-    const mainContent = `Let me tell you about "${title}". ${description}${details ? ` ${details}` : ''}`;
-    const fullText = `${intro}${mainContent}`;
+      if (!response.ok) {
+        if (response.status === 404) {
+          throw new Error('Translation service not available. Please use English or contact support.');
+        }
+        throw new Error(`Translation failed: ${response.status}`);
+      }
+
+      const result = await response.json();
+      if (!result.success) {
+        throw new Error(result.error || 'Translation failed');
+      }
+      console.log('✅ Translation completed:', result.translation);
+      
+      // Cache the translation
+      const cacheData = {
+        translation: result.translation,
+        timestamp: Date.now(),
+        sourceText: text.substring(0, 100)
+      };
+      localStorage.setItem(cacheKey, JSON.stringify(cacheData));
+      
+      return result.translation;
+    } catch (error) {
+      console.error('Translation error:', error);
+      setTranslationError(`Translation failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      return text; // Return original text if translation fails
+    }
+  };
+
+  // Generate narration text (without narrator introduction)
+  const generateNarrationText = async (): Promise<string> => {
+    // Generate main content without narrator introduction
+    const mainContent = `${currentTitle}. ${currentDescription}${currentDetails ? ` ${currentDetails}` : ''}`;
 
     // If not English, translate the content
     if (selectedLanguage !== 'en') {
       try {
-        const translatedText = await translateText(fullText, selectedLanguage);
+        const translatedText = await translateText(mainContent, selectedLanguage);
         return translatedText;
       } catch (error) {
         console.error('Translation failed, using original text:', error);
-        return fullText;
+        return mainContent;
       }
     }
 
-    return fullText;
+    return mainContent;
   };
 
+  // Handle play/pause
   const handlePlay = async () => {
     if (isPlaying) {
-      // Pause current playback
+      // Pause current playback (don't reset time)
       console.log('⏸️ Pausing current playback...');
+      setAudioEndedNaturally(false); // Mark as manually paused
       
-      // Pause AI TTS audio if it exists
+      // Pause AI TTS audio if it exists (keep position)
       if (audioRef.current) {
         audioRef.current.pause();
       }
       
-      // Stop browser TTS speech synthesis
+      // Pause browser TTS speech synthesis
       if (speechSynthesis.speaking) {
-        speechSynthesis.cancel();
+        speechSynthesis.pause();
       }
       
-      setIsPlaying(false);
-      onPlaybackChange?.(false);
+      pauseNarration();
       return;
     }
 
-    setIsGenerating(true);
+    // If paused, resume from current position (only for AI TTS)
+    if (audioRef.current && audioRef.current.paused && audioRef.current.currentTime > 0 && isUsingAITTS) {
+      console.log('▶️ Resuming AI TTS from paused position');
+      audioRef.current.play();
+      playNarration();
+      return;
+    }
+
+    // If browser TTS is paused, resume it (only if not using AI TTS)
+    if (speechSynthesis.paused && !isUsingAITTS) {
+      console.log('▶️ Resuming browser TTS from paused position');
+      speechSynthesis.resume();
+      playNarration();
+      return;
+    }
+
+    if (!currentEventId) return;
+
+    // Stop ALL audio before starting new narration
+    console.log('🛑 Stopping all audio before starting new narration...');
+    cleanupAllAudio();
+
+    setLocalIsGeneratingDebug(true);
     setAudioError('');
-    
+    isInitializingPlayback.current = true;
+    console.log('🔧 Set isInitializingPlayback to true');
+
     try {
+      console.log('🎬 Starting event narration...');
+      console.log('📋 Current event ID:', currentEventId);
+      console.log('🎤 Selected voice:', selectedVoice);
+      console.log('🌍 Selected language:', selectedLanguage);
+      console.log('🤖 Using AI TTS:', useAITTS);
+      console.log('🌐 Online status:', isOnline);
+      
       const text = await generateNarrationText();
+      console.log('📝 Generated narration text length:', text.length);
       setCurrentText(text);
       setTranslatedText(text);
 
+      // Try AI TTS first if enabled and online
       if (useAITTS && isOnline) {
-        // Use AI TTS
         try {
           let audioUrl = '';
           
@@ -1089,13 +863,15 @@ export default function BrowserTTSNarration({
             const fallbackVoice = availableVoices[0];
             if (fallbackVoice) {
               console.log(`🔄 Using fallback voice: ${fallbackVoice.key}`);
-              setSelectedVoice(fallbackVoice.key);
+              updateSettings({ selectedVoice: fallbackVoice.key });
               audioUrl = await generateAITTS(text, fallbackVoice.key);
             } else {
               throw new Error(`No voices available for language ${selectedLanguage}`);
             }
           } else {
             console.log(`✅ Voice validation passed: ${selectedVoice} for ${selectedLanguage}`);
+            console.log(`🎤 Selected voice details:`, selectedVoiceOption);
+            console.log(`🔑 Voice key being sent to API:`, selectedVoice);
             audioUrl = await generateAITTS(text, selectedVoice);
           }
           
@@ -1105,39 +881,56 @@ export default function BrowserTTSNarration({
           }
           
           setAudioUrl(audioUrl);
-          onAudioGenerated?.(audioUrl);
           
           // Create audio element for playback
           const audio = new Audio();
+          audio.autoplay = false; // Prevent auto-play
+          audio.preload = 'auto'; // Preload the audio
           audioRef.current = audio;
           console.log('🎵 Created new audio element');
           
           // Set up simple event handlers
           audio.onplay = () => {
-            console.log('🎵 Audio started playing');
-            setIsPlaying(true);
-            setIsGenerating(false);
-            onPlaybackChange?.(true);
+            console.log('🎵 AI TTS Audio started playing');
+            console.log('🔧 About to set localIsGenerating to false in onplay');
+            setLocalIsGeneratingDebug(false);
+            setIsStartingPlayback(false);
+            playNarration(); // Set the playing state when audio actually starts
+            
+            // Clear the initialization flag after a small delay to ensure audio is fully started
+            setTimeout(() => {
+              isInitializingPlayback.current = false;
+              console.log('🔧 Set isInitializingPlayback to false (delayed)');
+            }, 500);
+          };
+          
+          audio.onloadstart = () => {
+            console.log('🎵 Audio loading started');
+          };
+          
+          audio.oncanplay = () => {
+            console.log('🎵 Audio can start playing');
           };
           
           audio.onpause = () => {
-            console.log('🎵 Audio paused');
-            setIsPlaying(false);
-            onPlaybackChange?.(false);
+            console.log('🎵 AI TTS Audio paused');
+            pauseNarration(); // This updates the context state
           };
           
           audio.onended = () => {
-            console.log('🎵 Audio ended');
-            setIsPlaying(false);
-            onPlaybackChange?.(false);
+            console.log('🎵 AI TTS Audio ended naturally - triggering auto-play check');
+            setAudioEndedNaturally(true); // Mark as naturally ended in context
+            pauseNarration(); // This updates the context state
+            // The auto-play logic in TTSContext will handle the next event
           };
           
           audio.onerror = (event) => {
             console.error('Audio playback error:', event);
             setAudioError(`Audio playback failed: ${audio.error?.message || 'Unknown error'}`);
-            setIsPlaying(false);
-            setIsGenerating(false);
-            onPlaybackChange?.(false);
+            setLocalIsGeneratingDebug(false);
+            isInitializingPlayback.current = false;
+            console.log('🔧 Set isInitializingPlayback to false (error)');
+            pauseNarration();
           };
           
           audio.volume = isMuted ? 0 : volume;
@@ -1163,28 +956,57 @@ export default function BrowserTTSNarration({
           
           // Play the audio
           try {
-            console.log('🎵 Starting audio playback');
+            console.log('🎵 Starting AI TTS audio playback');
+            setIsUsingAITTS(true); // Mark that we're using AI TTS
+            setIsStartingPlayback(true); // Mark that we're starting playback
+            
+            // Add a small delay to prevent race conditions
+            await new Promise(resolve => setTimeout(resolve, 100));
+            
+            // Check if we're still supposed to be playing (not interrupted)
+            // Since we're generating, we should continue
+            console.log('🔍 Checking state before play:', { localIsGenerating, isPlaying, isStartingPlayback });
+            
             await audio.play();
             console.log('🎵 Audio play() called successfully');
+            return; // Success! Exit the function
           } catch (playError) {
             console.error('Audio play() failed:', playError);
+            setIsStartingPlayback(false); // Clear the starting flag
+            setLocalIsGeneratingDebug(false);
+            isInitializingPlayback.current = false;
+            console.log('🔧 Set isInitializingPlayback to false (play error)');
+            
+            // Don't show error for interrupted play requests
+            if ((playError as any)?.name === 'AbortError' || (playError as any)?.message?.includes('interrupted')) {
+              console.log('🎵 Audio play was interrupted (expected)');
+              return;
+            }
+            
             setAudioError(`Failed to start audio playback: ${playError instanceof Error ? playError.message : 'Unknown error'}`);
-            setIsGenerating(false);
+            setIsUsingAITTS(false); // Reset flag on failure
+            throw playError; // Re-throw to trigger fallback
           }
           
         } catch (error) {
           console.error('AI TTS failed, falling back to browser TTS:', error);
           setAudioError(`AI TTS failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
-          setUseAITTS(false);
-          // Fall through to browser TTS
+          setLocalIsGeneratingDebug(false);
+          setIsStartingPlayback(false);
+          isInitializingPlayback.current = false;
+          console.log('🔧 Set isInitializingPlayback to false (AI TTS error)');
+          setIsUsingAITTS(false); // Reset flag since we're falling back
+          // Continue to browser TTS fallback
         }
       }
       
-      if (!useAITTS || !isOnline) {
+      // Fallback to browser TTS if AI TTS failed or is disabled
+      if ((!useAITTS || !isOnline) && !isUsingAITTS) {
+        console.log('🔄 Using browser TTS fallback');
         // Use browser TTS
         if (!isSupported) {
           alert('Your browser does not support text-to-speech. Please use a modern browser like Chrome, Firefox, or Safari.');
-          setIsGenerating(false);
+          setLocalIsGeneratingDebug(false);
           return;
         }
 
@@ -1192,8 +1014,7 @@ export default function BrowserTTSNarration({
         const utterance = new SpeechSynthesisUtterance(text);
         utteranceRef.current = utterance;
 
-        // Set voice properties based on selection
-        const voice = selectedVoiceOption;
+        // Set voice properties
         utterance.rate = speed;
         utterance.pitch = pitch;
         utterance.volume = isMuted ? 0 : volume;
@@ -1202,30 +1023,17 @@ export default function BrowserTTSNarration({
         const voices = speechSynthesis.getVoices();
         let selectedVoiceObj = null;
 
-        // Look for voices that match our criteria
-        if (voice?.gender === 'male' && voice?.accent === 'British') {
+        if (selectedVoiceOption?.gender === 'male' && selectedVoiceOption?.accent === 'British') {
           selectedVoiceObj = voices.find(v => 
             v.name.toLowerCase().includes('male') || 
             v.name.toLowerCase().includes('british') ||
             v.name.toLowerCase().includes('uk')
           );
-        } else if (voice?.gender === 'female' && voice?.accent === 'British') {
+        } else if (selectedVoiceOption?.gender === 'female' && selectedVoiceOption?.accent === 'British') {
           selectedVoiceObj = voices.find(v => 
             v.name.toLowerCase().includes('female') || 
             v.name.toLowerCase().includes('british') ||
             v.name.toLowerCase().includes('uk')
-          );
-        } else if (voice?.gender === 'male' && voice?.accent === 'American') {
-          selectedVoiceObj = voices.find(v => 
-            v.name.toLowerCase().includes('male') || 
-            v.name.toLowerCase().includes('american') ||
-            v.name.toLowerCase().includes('us')
-          );
-        } else if (voice?.gender === 'female' && voice?.accent === 'American') {
-          selectedVoiceObj = voices.find(v => 
-            v.name.toLowerCase().includes('female') || 
-            v.name.toLowerCase().includes('american') ||
-            v.name.toLowerCase().includes('us')
           );
         }
 
@@ -1233,63 +1041,51 @@ export default function BrowserTTSNarration({
           utterance.voice = selectedVoiceObj;
         }
 
-        // Set up event handlers
+        // Set up event handlers - Call playNarration to update context state
         utterance.onstart = () => {
-          setIsPlaying(true);
-          setIsGenerating(false);
-          onPlaybackChange?.(true);
+          console.log('🎵 Browser TTS started playing');
+          setLocalIsGeneratingDebug(false);
+          isInitializingPlayback.current = false;
+          setIsUsingAITTS(false); // Mark that we're using browser TTS
+          playNarration(); // This updates the context state
         };
 
         utterance.onend = () => {
-          setIsPlaying(false);
-          onPlaybackChange?.(false);
+          console.log('🎵 Browser TTS ended naturally - triggering auto-play check');
+          setAudioEndedNaturally(true); // Mark as naturally ended in context
+          pauseNarration(); // This updates the context state
+          // The auto-play logic in TTSContext will handle the next event
         };
 
         utterance.onerror = (event) => {
           console.error('Speech synthesis error:', event.error);
-          setIsPlaying(false);
-          setIsGenerating(false);
-          onPlaybackChange?.(false);
+          // Don't show error for "interrupted" as it's expected when changing voices
+          if (event.error !== 'interrupted') {
+            setAudioError(`Speech synthesis error: ${event.error}`);
+          }
+          setLocalIsGeneratingDebug(false);
+          isInitializingPlayback.current = false;
+          setIsUsingAITTS(false); // Reset flag on error
+          pauseNarration();
         };
 
         // Start speaking
+        console.log('🎵 Starting browser TTS with selected voice:', selectedVoiceObj?.name || 'default');
         speechSynthesis.speak(utterance);
       }
       
     } catch (error) {
       console.error('Error generating narration:', error);
-      setIsGenerating(false);
       setAudioError('Failed to generate narration');
+      setLocalIsGeneratingDebug(false);
+      setIsStartingPlayback(false);
+      isInitializingPlayback.current = false;
+      console.log('🔧 Set isInitializingPlayback to false (general error)');
     }
-  };
-
-  const handleStop = () => {
-    console.log('🛑 Stopping audio playback...');
-    
-    // Stop AI TTS audio if it exists
-    if (audioRef.current) {
-      console.log('🛑 Stopping AI TTS audio');
-      audioRef.current.pause();
-      audioRef.current.currentTime = 0;
-    }
-    
-    // Stop browser TTS speech synthesis
-    if (speechSynthesis.speaking) {
-      console.log('🛑 Stopping browser TTS speech synthesis');
-      speechSynthesis.cancel();
-    }
-    
-    // Reset all states
-    setIsPlaying(false);
-    setIsGenerating(false);
-    setIsAudioLoading(false);
-    onPlaybackChange?.(false);
-    
-    console.log('✅ Audio playback stopped');
   };
 
   const handleMute = () => {
-    setIsMuted(!isMuted);
+    updateSettings({ isMuted: !isMuted });
     if (useAITTS && audioRef.current) {
       audioRef.current.volume = isMuted ? volume : 0;
     } else if (utteranceRef.current) {
@@ -1297,16 +1093,23 @@ export default function BrowserTTSNarration({
     }
   };
 
+  const handleSkipNext = () => {
+    if (eventQueue.length > 0) {
+      const nextEvent = eventQueue[0];
+      // This will be handled by the context
+    }
+  };
+
   if (!isSupported) {
     return (
-      <Card className="mt-3 sm:mt-4 !bg-white dark:!bg-gray-800 !border-gray-200 dark:!border-gray-700 shadow-sm">
+      <Card className="fixed bottom-4 right-4 w-80 z-50 shadow-lg border border-gray-200 dark:border-gray-700">
         <CardHeader className="pb-3">
-          <CardTitle className="text-sm sm:text-sm text-gray-900 dark:text-white">
+          <CardTitle className="text-sm text-gray-900 dark:text-white">
             🎤 Voice Narration
           </CardTitle>
         </CardHeader>
         <CardContent className="pt-0">
-          <p className="text-sm sm:text-sm text-gray-600 dark:text-gray-400">
+          <p className="text-sm text-gray-600 dark:text-gray-400">
             Your browser doesn't support text-to-speech. Please use Chrome, Firefox, or Safari for voice narration.
           </p>
         </CardContent>
@@ -1315,32 +1118,32 @@ export default function BrowserTTSNarration({
   }
 
   return (
-    <Card className="mt-3 sm:mt-4 !bg-white dark:!bg-gray-800 !border-gray-200 dark:!border-gray-700 shadow-sm">
+    <Card className="sticky top-20 shadow-sm border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
       <CardHeader className="pb-3">
         <div className="flex flex-col space-y-3 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
-          <CardTitle className="text-sm sm:text-sm flex items-center gap-2 text-gray-900 dark:text-white">
+          <CardTitle className="text-sm flex items-center gap-2 text-gray-900 dark:text-white">
             {useAITTS ? (
-              <Cloud className="h-3 w-3 sm:h-4 sm:w-4 text-blue-600 dark:text-blue-400" />
+              <Cloud className="h-4 w-4 text-blue-600 dark:text-blue-400" />
             ) : (
-              <User className="h-3 w-3 sm:h-4 sm:w-4 text-blue-600 dark:text-blue-400" />
+              <User className="h-4 w-4 text-blue-600 dark:text-blue-400" />
             )}
-            <span className="truncate">{useAITTS ? 'AI Voice Narration' : 'Browser Voice Narration'}</span>
+            <span className="truncate">Global Voice Narration</span>
             {!isOnline && (
-              <WifiOff className="h-3 w-3 text-red-500 flex-shrink-0" />
+              <WifiOff className="h-4 w-4 text-red-500 flex-shrink-0" />
             )}
             {isOnline && useAITTS && serverAvailable === true && (
-              <Wifi className="h-3 w-3 text-green-500 flex-shrink-0" />
+              <Wifi className="h-4 w-4 text-green-500 flex-shrink-0" />
             )}
             {isOnline && useAITTS && serverAvailable === false && (
-              <WifiOff className="h-3 w-3 text-orange-500 flex-shrink-0" />
+              <WifiOff className="h-4 w-4 text-orange-500 flex-shrink-0" />
             )}
           </CardTitle>
-          <div className="flex items-center gap-1 sm:gap-2">
+          <div className="flex items-center gap-2">
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => setUseAITTS(!useAITTS)}
-              className="text-xs text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 px-2 sm:px-3"
+              onClick={() => updateSettings({ useAITTS: !useAITTS })}
+              className="text-xs text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 px-2"
               disabled={!isOnline}
             >
               {useAITTS ? 'Browser' : 'AI'}
@@ -1349,22 +1152,57 @@ export default function BrowserTTSNarration({
               variant="ghost"
               size="sm"
               onClick={() => setShowSettings(!showSettings)}
-              className="text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 p-1 sm:p-2"
+              className="text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 p-1"
             >
-              <Settings className="h-3 w-3 sm:h-4 sm:w-4" />
+              <Settings className="h-4 w-4" />
             </Button>
           </div>
         </div>
       </CardHeader>
-      <CardContent className="space-y-3 sm:space-y-4 pt-0">
+      
+      <CardContent className="space-y-3 pt-0">
+        {/* Current Content Display */}
+        {currentEventId ? (
+          <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg border border-blue-200 dark:border-blue-800">
+            <div className="text-xs font-medium text-blue-900 dark:text-blue-300 mb-1">Now Playing:</div>
+            <div className="text-sm text-blue-800 dark:text-blue-200 font-medium truncate">{currentTitle}</div>
+            {eventQueue.length > 0 && (
+              <div className="text-xs text-blue-600 dark:text-blue-400 mt-1">
+                {eventQueue.length} chronological events queued automatically
+              </div>
+            )}
+            {autoPlayNext && eventQueue.length === 0 && currentEventId && (
+              <div className="text-xs text-green-600 dark:text-green-400 mt-1">
+                ✓ Continuous auto-play enabled - will continue through all events
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="bg-gray-50 dark:bg-gray-800 p-3 rounded-lg border border-gray-200 dark:border-gray-700">
+            <div className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Ready to Play:</div>
+            <div className="text-sm text-gray-600 dark:text-gray-400">
+              {autoPlayNext ? (
+                <>Click any "Narrate" button to start continuous chronological playback</>
+              ) : (
+                <>Click any "Narrate" button to play individual events</>
+              )}
+            </div>
+            {autoPlayNext && (
+              <div className="text-xs text-green-600 dark:text-green-400 mt-1">
+                ✓ Auto-play enabled - will continue through all events automatically
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Language Selection */}
         <div className="space-y-2">
           <label className="text-xs font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2">
             <Globe className="h-3 w-3" />
-            Choose Language
+            Language
           </label>
-          <Select value={selectedLanguage} onValueChange={setSelectedLanguage}>
-            <SelectTrigger className="w-full border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white bg-white dark:bg-gray-800 text-sm sm:text-sm">
+          <Select value={selectedLanguage} onValueChange={(value) => updateSettings({ selectedLanguage: value })}>
+            <SelectTrigger className="w-full border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white bg-white dark:bg-gray-800 text-sm">
               <SelectValue />
             </SelectTrigger>
             <SelectContent className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 max-h-60">
@@ -1387,17 +1225,17 @@ export default function BrowserTTSNarration({
         <div className="space-y-2">
           <label className="text-xs font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2">
             <Languages className="h-3 w-3" />
-            Choose Your Narrator
+            Voice
           </label>
-          <Select value={selectedVoice} onValueChange={setSelectedVoice}>
-            <SelectTrigger className="w-full border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white bg-white dark:bg-gray-800 text-sm sm:text-sm">
+          <Select value={selectedVoice} onValueChange={(value) => updateSettings({ selectedVoice: value })}>
+            <SelectTrigger className="w-full border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white bg-white dark:bg-gray-800 text-sm">
               <SelectValue />
             </SelectTrigger>
             <SelectContent className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
               {availableVoices.map((voice) => (
                 <SelectItem key={voice.key} value={voice.key} className="text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-700">
                   <div className="flex flex-col">
-                    <span className="font-medium text-sm sm:text-sm">{voice.name}</span>
+                    <span className="font-medium text-sm">{voice.name}</span>
                     <span className="text-sm text-gray-500 dark:text-gray-400">{voice.description}</span>
                   </div>
                 </SelectItem>
@@ -1406,10 +1244,29 @@ export default function BrowserTTSNarration({
           </Select>
         </div>
 
+        {/* Auto-play Toggle */}
+        <div className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-700 rounded-lg">
+          <div className="flex items-center gap-2">
+            <SkipForward className="h-4 w-4 text-gray-600 dark:text-gray-400" />
+            <div className="flex flex-col">
+              <span className="text-sm text-gray-700 dark:text-gray-300">Auto-play next</span>
+              <span className="text-xs text-gray-500 dark:text-gray-400">chronological events</span>
+            </div>
+          </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setAutoPlayNext(!autoPlayNext)}
+            className={`text-xs px-2 ${autoPlayNext ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300' : 'text-gray-600 dark:text-gray-400'}`}
+          >
+            {autoPlayNext ? 'ON' : 'OFF'}
+          </Button>
+        </div>
+
         {/* Advanced Settings */}
         {showSettings && (
-          <div className="space-y-3 p-2 sm:p-3 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div className="space-y-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+            <div className="grid grid-cols-1 gap-3">
               <div>
                 <label className="text-xs font-medium text-gray-700 dark:text-gray-300">
                   Speed: {speed.toFixed(1)}x
@@ -1420,7 +1277,7 @@ export default function BrowserTTSNarration({
                   max="2"
                   step="0.1"
                   value={speed}
-                  onChange={(e) => setSpeed(parseFloat(e.target.value))}
+                  onChange={(e) => updateSettings({ speed: parseFloat(e.target.value) })}
                   className="w-full mt-1 accent-blue-600"
                 />
               </div>
@@ -1434,7 +1291,7 @@ export default function BrowserTTSNarration({
                   max="2"
                   step="0.1"
                   value={pitch}
-                  onChange={(e) => setPitch(parseFloat(e.target.value))}
+                  onChange={(e) => updateSettings({ pitch: parseFloat(e.target.value) })}
                   className="w-full mt-1 accent-blue-600"
                 />
               </div>
@@ -1448,7 +1305,7 @@ export default function BrowserTTSNarration({
                   max="1"
                   step="0.1"
                   value={volume}
-                  onChange={(e) => setVolume(parseFloat(e.target.value))}
+                  onChange={(e) => updateSettings({ volume: parseFloat(e.target.value) })}
                   className="w-full mt-1 accent-blue-600"
                 />
               </div>
@@ -1456,111 +1313,56 @@ export default function BrowserTTSNarration({
           </div>
         )}
 
-        {/* Voice Info */}
-        {selectedVoiceOption && (
-          <div className="text-xs text-gray-600 dark:text-gray-400 bg-blue-50 dark:bg-blue-900/20 p-2 rounded border border-blue-200 dark:border-blue-800">
-            <strong className="text-gray-900 dark:text-white">{selectedVoiceOption.name}:</strong> {selectedVoiceOption.characteristics}
-          </div>
-        )}
-
-        {/* Translation Status */}
-        {isTranslating && (
-          <div className="text-xs text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 p-2 rounded border border-blue-200 dark:border-blue-800">
-            <strong className="text-blue-900 dark:text-blue-300">🌍 Translating:</strong> Converting to {selectedLanguageOption?.nativeName}...
-          </div>
-        )}
-
-        {/* Translation Error */}
-        {translationError && (
-          <div className="text-xs text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-900/20 p-2 rounded border border-orange-200 dark:border-orange-800">
-            <strong className="text-orange-900 dark:text-orange-300">⚠️ Translation:</strong> {translationError}
-          </div>
-        )}
-
-        {/* Server Status */}
-        {serverAvailable === false && (
-          <div className="text-xs text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-900/20 p-2 rounded border border-orange-200 dark:border-orange-800">
-            <strong className="text-orange-900 dark:text-orange-300">⚠️ Server:</strong> AI TTS service not available, using browser TTS
-          </div>
-        )}
-
         {/* Controls */}
-        <div className="flex flex-col space-y-2 sm:flex-row sm:items-center sm:space-y-0 sm:gap-2">
+        <div className="flex flex-col space-y-2">
           <Button
             onClick={handlePlay}
-            disabled={isGenerating || isTranslating}
-            className="flex-1 bg-blue-600 hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-700 text-sm sm:text-sm"
+            disabled={localIsGenerating || isTranslating || !currentEventId}
+            className="w-full bg-blue-600 hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-700 text-sm"
             size="sm"
           >
-            {isGenerating || isAudioLoading || isTranslating ? (
-              <Loader2 className="h-3 w-3 sm:h-4 sm:w-4 animate-spin mr-1 sm:mr-2" />
+            {localIsGenerating || isAudioLoading || isTranslating ? (
+              <Loader2 className="h-4 w-4 animate-spin mr-2" />
             ) : isPlaying ? (
-              <Pause className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+              <Pause className="h-4 w-4 mr-2" />
             ) : (
-              <Play className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+              <Play className="h-4 w-4 mr-2" />
             )}
-            {isTranslating ? 'Translating...' : isGenerating || isAudioLoading ? 'Preparing...' : isPlaying ? 'Pause' : 'Listen'}
+            {isTranslating ? 'Translating...' : localIsGenerating || isAudioLoading ? 'Preparing...' : isPlaying ? 'Pause' : 'Play'}
           </Button>
           
-          <div className="flex items-center gap-1 sm:gap-2">
-            <Button
-              onClick={handleStop}
-              variant="outline"
-              size="sm"
-              disabled={!isPlaying}
-              className="border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 text-sm sm:text-sm"
-            >
-              Stop
-            </Button>
-            
+          <div className="flex items-center gap-2">
             <Button
               onClick={handleMute}
               variant="outline"
               size="sm"
               disabled={!isPlaying}
-              className="border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 p-1 sm:p-2"
+              className="flex-1 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 text-sm"
             >
-              {isMuted ? <VolumeX className="h-3 w-3 sm:h-4 sm:w-4" /> : <Volume2 className="h-3 w-3 sm:h-4 sm:w-4" />}
+              {isMuted ? <VolumeX className="h-4 w-4 mr-1" /> : <Volume2 className="h-4 w-4 mr-1" />}
+              {isMuted ? 'Unmute' : 'Mute'}
             </Button>
+            
+            {eventQueue.length > 0 && (
+              <Button
+                onClick={handleSkipNext}
+                variant="outline"
+                size="sm"
+                className="border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 p-2"
+              >
+                <SkipForward className="h-4 w-4" />
+              </Button>
+            )}
           </div>
+          
         </div>
 
-        {/* Error Display */}
-        {audioError && (
-          <div className="text-xs text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 p-2 rounded border border-red-200 dark:border-red-800">
-            <strong className="text-red-900 dark:text-red-300">Error:</strong> {audioError}
-          </div>
-        )}
+       
 
-        {/* Audio URL Display */}
-        {audioUrl && useAITTS && (
-          <div className="text-xs text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/20 p-2 rounded border border-green-200 dark:border-green-800">
-            <strong className="text-green-900 dark:text-green-300">AI Audio:</strong> 
-            {cachedAudioUrl === audioUrl ? 'Loaded from cache' : 'Generated successfully'}
-            <audio ref={audioRef} src={audioUrl} className="hidden" />
-          </div>
-        )}
-
-        {/* Loading State */}
-        {isAudioLoading && useAITTS && (
-          <div className="text-xs text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 p-2 rounded border border-blue-200 dark:border-blue-800">
-            <strong className="text-blue-900 dark:text-blue-300">AI Processing:</strong> Generating high-quality audio...
-          </div>
-        )}
-
-        {/* Current Text Preview */}
-        {currentText && (
-          <div className="space-y-2">
-            {selectedLanguage !== 'en' && translatedText && translatedText !== currentText && (
-              <div className="text-xs text-gray-600 dark:text-gray-400 bg-green-50 dark:bg-green-900/20 p-2 rounded max-h-16 sm:max-h-20 overflow-y-auto border border-green-200 dark:border-green-800">
-                <strong className="text-green-900 dark:text-green-300">🌍 {selectedLanguageOption?.nativeName}:</strong> {translatedText.substring(0, 150)}
-                {translatedText.length > 150 && '...'}
-              </div>
-            )}
-          <div className="text-xs text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-800 p-2 rounded max-h-16 sm:max-h-20 overflow-y-auto border border-gray-200 dark:border-gray-700">
-              <strong className="text-gray-900 dark:text-white">📝 {selectedLanguage === 'en' ? 'Narration' : 'Original'}:</strong> {currentText.substring(0, 150)}
-            {currentText.length > 150 && '...'}
-            </div>
+        {/* Translation Error */}
+        {translationError && (
+          <div className="text-xs text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-900/20 p-2 rounded border border-orange-200 dark:border-orange-800">
+            <strong className="text-orange-900 dark:text-orange-300">⚠️ Translation:</strong> {translationError}
           </div>
         )}
       </CardContent>

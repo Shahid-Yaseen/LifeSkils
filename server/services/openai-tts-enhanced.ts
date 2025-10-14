@@ -626,8 +626,8 @@ export class OpenAIEnhancedTTS {
       
       await fs.writeFile(filePath, audioBuffer);
       
-      // Create accessible URL - use uploads path for static serving
-      const audioUrl = `/uploads/audio_cache/${fileName}`;
+      // Create accessible URL - use api/audio path for static serving
+      const audioUrl = `/api/audio/${fileName}`;
       
       // Cache the result
       this.audioCache.set(cacheKey, audioUrl);

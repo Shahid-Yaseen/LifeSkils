@@ -39,7 +39,7 @@ export default function ProgressRoadmap({ userId }: ProgressRoadmapProps) {
 
   return (
     <Card className="shadow-sm border border-gray-200 overflow-hidden">
-      <CardHeader className="border-b border-gray-200 p-4 sm:p-6">
+      <CardHeader className="border-b border-gray-200 p-2 sm:p-4">
         <CardTitle className="text-base sm:text-lg font-semibold text-gray-900 flex items-center">
           <Map className="text-success mr-2 sm:mr-3" size={18} />
           <span className="hidden sm:inline">Learning Roadmap</span>

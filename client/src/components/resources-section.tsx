@@ -89,12 +89,12 @@ export default function ResourcesSection() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Amazon Book Purchase Section */}
       <Card className="shadow-sm border border-orange-200 bg-gradient-to-r from-orange-50 to-amber-50 overflow-hidden">
-        <CardHeader className="border-b border-orange-200 p-4 sm:p-6">
-          <CardTitle className="text-base sm:text-lg font-semibold text-gray-900 flex items-center">
-            <BookOpen className="text-orange-600 mr-2 sm:mr-3" size={18} />
+        <CardHeader className="border-b border-orange-200 p-3 sm:p-4">
+          <CardTitle className="text-sm sm:text-base font-semibold text-gray-900 flex items-center">
+            <BookOpen className="text-orange-600 mr-2" size={16} />
             <span className="hidden sm:inline">Official Study Book</span>
             <span className="sm:hidden">Study Book</span>
             <Badge variant="secondary" className="ml-2 bg-orange-100 text-orange-800 text-xs">
@@ -103,37 +103,31 @@ export default function ResourcesSection() {
           </CardTitle>
         </CardHeader>
         
-        <CardContent className="p-4 sm:p-6">
-          <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between space-y-4 lg:space-y-0 lg:space-x-6">
-            <div className="flex-1 min-w-0">
-              <h3 className="font-semibold text-gray-900 mb-2 text-sm sm:text-base lg:text-lg">Life in the UK Test: Handbook 2025</h3>
-              <p className="text-xs sm:text-sm text-gray-600 mb-3 leading-relaxed">
+        <CardContent className="p-3 sm:p-4">
+          <div className="space-y-3">
+            <div>
+              <h3 className="font-semibold text-gray-900 mb-1 text-sm sm:text-base">Life in the UK Test: Handbook 2025</h3>
+              <p className="text-xs sm:text-sm text-gray-600 mb-2 leading-relaxed">
                 Everything you need to study for the British citizenship test. Includes online practice tests access.
               </p>
-              <div className="flex flex-wrap items-center gap-x-3 sm:gap-x-4 gap-y-1 text-xs text-gray-500">
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-500">
                 <span>✓ Updated for 2025</span>
                 <span>✓ Official content</span>
                 <span>✓ Online tests included</span>
               </div>
             </div>
             
-            <div className="flex flex-col sm:flex-row lg:flex-col space-y-2 sm:space-y-0 sm:space-x-2 lg:space-x-0 lg:space-y-3 w-full lg:w-auto lg:min-w-[180px]">
-              <Button 
-                className="bg-orange-600 hover:bg-orange-700 text-white px-3 sm:px-4 py-2 text-xs sm:text-sm w-full sm:w-auto lg:w-full"
-                onClick={() => window.open('https://www.amazon.co.uk/Life-UK-Test-Everything-citizenship/dp/1907389954', '_blank')}
-              >
-                <ShoppingCart className="mr-1 sm:mr-2" size={12} />
-                Amazon UK
-                <ExternalLink className="ml-1 sm:ml-2" size={10} />
-              </Button>
+            {/* Buttons moved to bottom */}
+            <div className="flex flex-col sm:flex-row gap-2 pt-2 border-t border-orange-200">
+             
               <Button 
                 variant="outline"
-                className="border-orange-300 text-orange-700 hover:bg-orange-50 px-3 sm:px-4 py-2 text-xs sm:text-sm w-full sm:w-auto lg:w-full"
+                className="border-orange-300 text-orange-700 hover:bg-orange-50 px-3 py-2 text-xs sm:text-sm flex-1"
                 onClick={() => window.open('https://www.amazon.com/Life-UK-Test-essential-citizenship/dp/1907389938', '_blank')}
               >
-                <ShoppingCart className="mr-1 sm:mr-2" size={12} />
+                <ShoppingCart className="mr-2" size={12} />
                 Amazon US
-                <ExternalLink className="ml-1 sm:ml-2" size={10} />
+                <ExternalLink className="ml-2" size={10} />
               </Button>
             </div>
           </div>
@@ -142,23 +136,23 @@ export default function ResourcesSection() {
 
       {/* Downloadable Resources Section */}
       <Card className="shadow-sm border border-gray-200 overflow-hidden">
-        <CardHeader className="border-b border-gray-200 p-4 sm:p-6">
-          <CardTitle className="text-base sm:text-lg font-semibold text-gray-900 flex items-center">
-            <Download className="text-uk-red mr-2 sm:mr-3" size={18} />
+        <CardHeader className="border-b border-gray-200 p-3 sm:p-4">
+          <CardTitle className="text-sm sm:text-base font-semibold text-gray-900 flex items-center">
+            <Download className="text-uk-red mr-2" size={16} />
             <span className="hidden sm:inline">Free Cheatsheets & Resources</span>
             <span className="sm:hidden">Resources</span>
           </CardTitle>
         </CardHeader>
         
-        <CardContent className="p-4 sm:p-6 space-y-2 sm:space-y-3">
+        <CardContent className="p-3 sm:p-4 space-y-2">
         {typedResources.map((resource) => (
           <div 
             key={resource.id}
-            className="flex items-center justify-between p-2 sm:p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer group"
+            className="flex items-center justify-between p-2 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer group"
             onClick={() => handleDownload(resource.id, resource.title)}
           >
-            <div className="flex items-center space-x-2 sm:space-x-3 min-w-0 flex-1">
-              <div className={`w-6 h-6 sm:w-8 sm:h-8 ${getIconColor(resource.fileType)} rounded-lg flex items-center justify-center flex-shrink-0`}>
+            <div className="flex items-center space-x-2 min-w-0 flex-1">
+              <div className={`w-6 h-6 ${getIconColor(resource.fileType)} rounded-lg flex items-center justify-center flex-shrink-0`}>
                 {getFileIcon(resource.fileType)}
               </div>
               <div className="min-w-0 flex-1">

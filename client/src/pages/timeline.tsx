@@ -5,9 +5,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import BrowserTTSNarration from "@/components/browser-tts-narration";
+import NarrateButton from "@/components/narrate-button";
 import MobileNav from "@/components/mobile-nav";
 import FloatingChatbot from "@/components/floating-chatbot";
+import { TTSProvider } from "@/contexts/TTSContext";
+import GlobalTTSNarration from "@/components/global-tts-narration";
 import { 
   Calendar, 
   Crown, 
@@ -523,7 +525,8 @@ export default function TimelinePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <TTSProvider>
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Header */}
       <div className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
         <div className="container mx-auto max-w-6xl px-4 py-4 sm:py-6">
@@ -666,11 +669,14 @@ export default function TimelinePage() {
 
                             {/* Browser TTS Voice Narration */}
                             <div className="mt-4">
-                              <BrowserTTSNarration
+                              <NarrateButton
                                 eventId={event.id}
                                 title={event.title}
                                 description={event.description}
                                 details={event.details}
+                                variant="outline"
+                                size="sm"
+                                className="w-full"
                               />
                             </div>
                             
@@ -757,6 +763,7 @@ export default function TimelinePage() {
       
       {/* Add padding bottom for mobile navigation */}
       <div className="h-16 sm:h-20 md:hidden"></div>
-    </div>
+      </div>
+    </TTSProvider>
   );
 }

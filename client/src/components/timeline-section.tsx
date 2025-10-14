@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
 import { useState, useMemo, useRef, useEffect } from "react";
-import BrowserTTSNarration from "@/components/browser-tts-narration";
+import NarrateButton from "@/components/narrate-button";
 
 const getCategoryColor = (category: string | undefined | null) => {
   if (!category) {
@@ -409,6 +409,7 @@ export default function TimelineSection() {
                   <div 
                     key={event.id} 
                     ref={(el) => eventRefs.current[event.id] = el}
+                    data-event-id={event.id}
                     className="relative"
                   >
                     {/* Timeline Dot */}
@@ -417,7 +418,7 @@ export default function TimelineSection() {
                     </div>
                     
                     {/* Event Content */}
-                    <div className={`flex flex-col lg:flex-row lg:items-center ${isEven ? 'lg:flex-row' : 'lg:flex-row-reverse'}`}>
+                    <div className={`flex flex-col lg:flex-row lg:items-start ${isEven ? 'lg:flex-row' : 'lg:flex-row-reverse'}`}>
                       {/* Content Side */}
                       <div className={`w-full lg:w-1/2 ${isEven ? 'lg:pr-8 lg:text-right' : 'lg:pl-8 lg:text-left'} mb-4 lg:mb-0`}>
                         <div className={`bg-white dark:bg-gray-800 rounded-xl p-4 sm:p-6 shadow-lg hover:shadow-xl transition-all duration-300 border-l-4 ${getCategoryColor(event.category).replace('bg-', 'border-')} group`}>
@@ -442,21 +443,21 @@ export default function TimelineSection() {
                                 className="w-full h-48 object-cover rounded-lg border border-gray-200 dark:border-gray-600 shadow-sm"
                               />
                               {event.imageDescription && (
-                                <p className="text-sm text-gray-600 dark:text-gray-400 mt-2 italic">
+                                <p className="text-sm text-gray-600 dark:text-gray-400 mt-2 italic text-justify">
                                   {event.imageDescription}
                                 </p>
                               )}
                             </div>
                           )}
                           
-                          <p className="text-gray-700 dark:text-gray-300 mb-4 leading-relaxed">
+                          <p className="text-gray-700 dark:text-gray-300 mb-4 leading-relaxed text-justify">
                             {event.description}
                           </p>
                           
                           {event.details && (
                             <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 mb-4 border border-gray-200 dark:border-gray-600">
                               <p className="text-sm text-gray-600 dark:text-gray-400 font-medium mb-2">Key Details:</p>
-                              <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">{event.details}</p>
+                              <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed text-justify">{event.details}</p>
                             </div>
                           )}
                           
@@ -469,11 +470,15 @@ export default function TimelineSection() {
 
                           {/* Enhanced AI Voice Narration */}
                           <div className="mb-4">
-                            <BrowserTTSNarration
+                            <NarrateButton
                               eventId={event.id}
                               title={event.title}
                               description={event.description}
                               details={event.details}
+                              variant="outline"
+                              size="sm"
+                              className="w-full"
+                              allEvents={events}
                             />
                           </div>
                           
@@ -514,7 +519,7 @@ export default function TimelineSection() {
                               />
                               {event.imageDescription && (
                                 <div className="p-3 sm:p-4">
-                                  <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 font-medium">{event.imageDescription}</p>
+                                  <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 font-medium text-justify">{event.imageDescription}</p>
                                 </div>
                               )}
                             </div>

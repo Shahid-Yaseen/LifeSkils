@@ -13,6 +13,9 @@ import FloatingChatbot from "@/components/floating-chatbot";
 import StudentProgressStats from "@/components/student-progress-stats";
 import { SimpleThemeToggle } from "@/components/ThemeToggle";
 import { useAuth } from "@/contexts/AuthContext";
+import { TTSProvider } from "@/contexts/TTSContext";
+import GlobalTTSNarration from "@/components/global-tts-narration";
+import EventNavigation from "@/components/event-navigation";
 
 export default function Dashboard() {
   const { user, isLoading } = useAuth();
@@ -35,7 +38,8 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <TTSProvider>
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Navigation Header */}
       <header className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8">
@@ -345,11 +349,16 @@ export default function Dashboard() {
           </div>
 
           {/* Right Column - Sidebar */}
-          <div className="space-y-4 lg:space-y-6">
+          <div className="space-y-3 lg:space-y-4">
             <StudentProgressStats userId={user.id} />
             <ProgressRoadmap userId={user.id} />
             <ResourcesSection />
-            <StudyStats userId={user.id} />
+            
+            {/* Fixed TTS and Navigation Group */}
+            <div className="sticky top-4 space-y-6 lg:space-y-20 z-10">
+              <GlobalTTSNarration />
+              <EventNavigation />
+            </div>
           </div>
         </div>
       </div>
@@ -359,6 +368,7 @@ export default function Dashboard() {
       
       {/* Add padding bottom for mobile navigation */}
       <div className="h-16 sm:h-20 md:hidden"></div>
-    </div>
+      </div>
+    </TTSProvider>
   );
 }
