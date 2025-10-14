@@ -355,7 +355,7 @@ export default function Dashboard() {
             <ResourcesSection />
             
             {/* Fixed TTS and Navigation Group */}
-            <div className="sticky top-4 space-y-6 lg:space-y-20 z-10">
+            <div className="sticky top-20 space-y-6 lg:space-y-4 z-10">
               <GlobalTTSNarration />
               <EventNavigation />
             </div>

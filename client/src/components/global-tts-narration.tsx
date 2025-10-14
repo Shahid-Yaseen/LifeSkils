@@ -1118,7 +1118,7 @@ export default function GlobalTTSNarration() {
   }
 
   return (
-    <Card className="sticky top-20 shadow-sm border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
+    <Card className="shadow-sm border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
       <CardHeader className="pb-3">
         <div className="flex flex-col space-y-3 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
           <CardTitle className="text-sm flex items-center gap-2 text-gray-900 dark:text-white">
