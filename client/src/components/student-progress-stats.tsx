@@ -104,7 +104,7 @@ export default function StudentProgressStats({ userId }: StudentProgressStatsPro
 
   if (isLoading) {
     return (
-      <Card className="h-full bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
+      <Card className="h-fit bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-gray-900 dark:text-white">
             <TrendingUp className="h-5 w-5 text-blue-600 dark:text-blue-400" />
@@ -123,7 +123,7 @@ export default function StudentProgressStats({ userId }: StudentProgressStatsPro
   }
 
   return (
-    <Card className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
+    <Card className="h-fit bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
       <CardHeader className="pb-2 p-3 sm:p-4">
         <CardTitle className="flex items-center gap-2 text-sm sm:text-base text-gray-900 dark:text-white">
           <TrendingUp className="h-4 w-4 text-blue-600 dark:text-blue-400" />
@@ -146,8 +146,8 @@ export default function StudentProgressStats({ userId }: StudentProgressStatsPro
         </div>
       </CardHeader>
       
-      <CardContent className="space-y-2 max-h-[300px] overflow-y-auto p-3 sm:p-4">
-        {categoryStats.slice(0, 4).map((category) => (
+      <CardContent className="space-y-2 p-3 sm:p-4">
+        {categoryStats.map((category) => (
           <div key={category.category} className="border border-gray-200 dark:border-gray-700 rounded-lg p-2 hover:shadow-md transition-shadow bg-white dark:bg-gray-800">
             <div className="flex items-center justify-between mb-1">
               <div className="flex items-center gap-2">

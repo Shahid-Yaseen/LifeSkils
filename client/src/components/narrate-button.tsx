@@ -67,15 +67,19 @@ export default function NarrateButton({
       onClick={handleNarrate}
       variant={variant}
       size={size}
-      className={`flex items-center gap-2 ${className}`}
+      className={`flex items-center gap-2 transition-all duration-200 ${
+        variant === 'outline' 
+          ? 'bg-gradient-to-r from-blue-50 to-purple-50 hover:from-blue-100 hover:to-purple-100 border-blue-300 hover:border-blue-400 text-blue-700 hover:text-blue-800 dark:from-blue-900/20 dark:to-purple-900/20 dark:hover:from-blue-900/30 dark:hover:to-purple-900/30 dark:border-blue-600 dark:hover:border-blue-500 dark:text-blue-300 dark:hover:text-blue-200' 
+          : ''
+      } ${className}`}
       disabled={isCurrentEvent && isPlaying}
     >
       {isCurrentEvent && isPlaying ? (
-        <Volume2 className="h-4 w-4 animate-pulse" />
+        <Volume2 className="h-4 w-4 animate-pulse text-blue-600 dark:text-blue-400" />
       ) : (
-        <Play className="h-4 w-4" />
+        <Play className="h-4 w-4 text-blue-600 dark:text-blue-400" />
       )}
-      {addToQueue ? 'Add to Queue' : 'Narrate'}
+      <span className="font-medium">{addToQueue ? 'Add to Queue' : 'Narrate'}</span>
     </Button>
   );
 }

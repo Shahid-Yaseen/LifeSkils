@@ -30,14 +30,14 @@ import confetti from "canvas-confetti";
 
 interface TimelineEvent {
   id: string;
-  year: number;
+  year: string | number;
   title: string;
   description: string;
   details?: string;
-  category: string;
+  period: string;
   importance: number;
   keyFigures?: string;
-  timelineTopic: string;
+  significance: string;
 }
 
 interface MatchingItem {
@@ -105,7 +105,7 @@ export default function TimelineTestPage() {
     const items: MatchingItem[] = events.slice(0, 8).map(event => ({
       id: event.id,
       title: event.title,
-      match: `${event.year} - ${event.category}`
+      match: `${event.year} - ${event.period || 'General'}`
     }));
     
     // Shuffle the right column items for analytical thinking

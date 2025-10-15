@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import MobileNav from "@/components/mobile-nav";
 import FloatingChatbot from "@/components/floating-chatbot";
-import { Clock, Target, CheckCircle, BookOpen, Users, Filter, Search, Star, TrendingUp } from "lucide-react";
+import { Clock, Target, CheckCircle, BookOpen, Users, Filter, Search, Star, TrendingUp, BarChart3 } from "lucide-react";
 import { 
   useEnhancedMockTests, 
   getDifficultyColor, 
@@ -113,49 +113,58 @@ export default function EnhancedMockTestsPage() {
         </div>
       </div>
 
-      {/* Enhanced Stats Section */}
-      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-        <div className="container mx-auto max-w-6xl px-4 py-4 sm:py-6">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="flex items-center space-x-2">
-              <BookOpen className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-              <div>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Total Tests</p>
-                <p className="font-bold text-lg text-gray-900 dark:text-white">{mockTests?.length || 0}</p>
-              </div>
-            </div>
-            <div className="flex items-center space-x-2">
-              <Clock className="h-5 w-5 text-orange-600 dark:text-orange-400" />
-              <div>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Time Limit</p>
-                <p className="font-bold text-lg text-gray-900 dark:text-white">45 Minutes</p>
-              </div>
-            </div>
-            <div className="flex items-center space-x-2">
-              <Target className="h-5 w-5 text-green-600 dark:text-green-400" />
-              <div>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Questions</p>
-                <p className="font-bold text-lg text-gray-900 dark:text-white">
-                  {mockTests && mockTests.length > 0 ? Math.round(mockTests.reduce((sum, test) => sum + (test.questions?.length || 0), 0) / mockTests.length) : 0} Avg
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center space-x-2">
-              <CheckCircle className="h-5 w-5 text-purple-600 dark:text-purple-400" />
-              <div>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Pass Mark</p>
-                <p className="font-bold text-lg text-gray-900 dark:text-white">
-                  {mockTests && mockTests.length > 0 ? Math.ceil((mockTests.reduce((sum, test) => sum + (test.questions?.length || 0), 0) / mockTests.length) * 0.75) : 0}/
-                  {mockTests && mockTests.length > 0 ? Math.round(mockTests.reduce((sum, test) => sum + (test.questions?.length || 0), 0) / mockTests.length) : 0} (75%)
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Enhanced Filters and Search */}
+      {/* Enhanced Stats Overview */}
       <div className="container mx-auto max-w-6xl p-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+          <Card className="!bg-white dark:!bg-gray-800 !border-gray-200 dark:!border-gray-700 shadow-sm">
+            <CardContent className="p-6">
+              <div className="flex items-center space-x-2">
+                <Target className="h-8 w-8 text-blue-600 dark:text-blue-400" />
+                <div>
+                  <p className="text-2xl font-bold text-gray-900 dark:text-white">{mockTests?.length || 0}</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">Total Tests</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card className="!bg-white dark:!bg-gray-800 !border-gray-200 dark:!border-gray-700 shadow-sm">
+            <CardContent className="p-6">
+              <div className="flex items-center space-x-2">
+                <CheckCircle className="h-8 w-8 text-green-600 dark:text-green-400" />
+                <div>
+                  <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                    {mockTests && mockTests.length > 0 ? Math.round(mockTests.reduce((sum, test) => sum + (test.questions?.length || 0), 0) / mockTests.length) : 0}
+                  </p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">Avg Questions</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card className="!bg-white dark:!bg-gray-800 !border-gray-200 dark:!border-gray-700 shadow-sm">
+            <CardContent className="p-6">
+              <div className="flex items-center space-x-2">
+                <Clock className="h-8 w-8 text-orange-600 dark:text-orange-400" />
+                <div>
+                  <p className="text-2xl font-bold text-gray-900 dark:text-white">45</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">Minutes</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card className="!bg-white dark:!bg-gray-800 !border-gray-200 dark:!border-gray-700 shadow-sm">
+            <CardContent className="p-6">
+              <div className="flex items-center space-x-2">
+                <BarChart3 className="h-8 w-8 text-purple-600 dark:text-purple-400" />
+                <div>
+                  <p className="text-2xl font-bold text-gray-900 dark:text-white">75%</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">Pass Mark</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Enhanced Filters and Search */}
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4 sm:p-6 mb-8">
           <div className="flex flex-col space-y-4 lg:flex-row lg:space-y-0 lg:gap-4">
             <div className="flex-1">

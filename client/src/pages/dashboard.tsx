@@ -16,6 +16,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { TTSProvider } from "@/contexts/TTSContext";
 import GlobalTTSNarration from "@/components/global-tts-narration";
 import EventNavigation from "@/components/event-navigation";
+import TimelineScrollNavigation from "@/components/timeline-scroll-navigation";
 
 export default function Dashboard() {
   const { user, isLoading } = useAuth();
@@ -365,6 +366,7 @@ export default function Dashboard() {
 
       <MobileNav />
       <FloatingChatbot />
+      <TimelineScrollNavigation />
       
       {/* Add padding bottom for mobile navigation */}
       <div className="h-16 sm:h-20 md:hidden"></div>

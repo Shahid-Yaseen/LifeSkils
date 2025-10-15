@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -21,10 +21,7 @@ import {
   Clock,
   Users,
   Star,
-  Volume2,
-  VolumeX,
   Trophy,
-  Music,
   Palette,
   BookOpen,
   PartyPopper,
@@ -32,10 +29,7 @@ import {
   Church,
   Play,
   Video,
-  ExternalLink,
-  Languages,
-  User,
-  Pause
+  ExternalLink
 } from "lucide-react";
 
 interface TimelineEvent {
@@ -170,27 +164,10 @@ const TIMELINE_TOPICS = [
   }
 ];
 
-interface Language {
-  code: string;
-  name: string;
-}
-
 export default function TimelinePage() {
   const [selectedTopic, setSelectedTopic] = useState<string | null>(null);
   const [, setLocation] = useLocation();
-  const [speaking, setSpeaking] = useState<string | null>(null);
   
-  // Enhanced AI voice state
-  const [selectedLanguage, setSelectedLanguage] = useState('en');
-  const [selectedVoice, setSelectedVoice] = useState<'male' | 'female'>('female');
-  const [languages, setLanguages] = useState<Language[]>([]);
-  const [isGeneratingAudio, setIsGeneratingAudio] = useState<string | null>(null);
-  const [currentAudio, setCurrentAudio] = useState<string | null>(null);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [isMuted, setIsMuted] = useState(false);
-  const [volume, setVolume] = useState(1);
-  
-  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   const { data: allEvents, isLoading } = useQuery<TimelineEvent[]>({
     queryKey: ["/api/timeline"],
@@ -204,92 +181,6 @@ export default function TimelinePage() {
 
   const selectedTopicData = TIMELINE_TOPICS.find(t => t.id === selectedTopic);
 
-  // Load available languages
-  useEffect(() => {
-    fetchLanguages();
-  }, []);
-
-  const fetchLanguages = async () => {
-    try {
-      const response = await fetch('/api/tts/languages');
-      const data = await response.json();
-      setLanguages(data.languages || []);
-    } catch (error) {
-      console.error('Failed to fetch languages:', error);
-    }
-  };
-
-  const generateAINarration = async (event: TimelineEvent) => {
-    if (!event.description) return;
-
-    setIsGeneratingAudio(event.id);
-    try {
-      const response = await fetch('/api/tts/narrate', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          text: `${event.title}. ${event.description}${event.details ? ` ${event.details}` : ''}`,
-          language: selectedLanguage,
-          voiceGender: selectedVoice,
-          eventId: event.id,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to generate narration');
-      }
-
-      const data = await response.json();
-      setCurrentAudio(data.audioUrl);
-      
-      // Auto-play the generated audio
-      if (audioRef.current) {
-        audioRef.current.src = data.audioUrl;
-        audioRef.current.load();
-        audioRef.current.play();
-        setIsPlaying(true);
-      }
-    } catch (error) {
-      console.error('AI narration generation failed:', error);
-      // Fallback to browser TTS
-      speakText(`${event.title}. ${event.description}${event.details ? ` ${event.details}` : ''}`, event.id);
-    } finally {
-      setIsGeneratingAudio(null);
-    }
-  };
-
-  const togglePlayPause = () => {
-    if (!audioRef.current) return;
-
-    if (isPlaying) {
-      audioRef.current.pause();
-      setIsPlaying(false);
-    } else {
-      audioRef.current.play();
-      setIsPlaying(true);
-    }
-  };
-
-  const toggleMute = () => {
-    if (!audioRef.current) return;
-
-    if (isMuted) {
-      audioRef.current.volume = volume;
-      setIsMuted(false);
-    } else {
-      audioRef.current.volume = 0;
-      setIsMuted(true);
-    }
-  };
-
-  const handleVolumeChange = (newVolume: number) => {
-    setVolume(newVolume);
-    if (audioRef.current && !isMuted) {
-      audioRef.current.volume = newVolume;
-    }
-  };
 
   const getImportanceColor = (importance: number) => {
     switch (importance) {
@@ -311,125 +202,6 @@ export default function TimelinePage() {
     ));
   };
 
-  const speakText = (text: string, eventId: string) => {
-    // Stop any currently speaking text
-    if (speaking) {
-      speechSynthesis.cancel();
-      setSpeaking(null);
-      return;
-    }
-
-    // Check if browser supports speech synthesis
-    if (!('speechSynthesis' in window)) {
-      alert('Your browser does not support text-to-speech functionality');
-      return;
-    }
-
-    // Ensure voices are loaded
-    const loadVoices = () => {
-      const voices = speechSynthesis.getVoices();
-      
-      // Create speech synthesis utterance
-      const utterance = new SpeechSynthesisUtterance(text);
-      
-      // Priority order for selecting female voices only
-      const preferredVoices = [
-        // Look for explicitly named female British voices
-        voices.find(voice => 
-          voice.lang.includes('en-GB') && 
-          (voice.name.toLowerCase().includes('kate') || 
-           voice.name.toLowerCase().includes('emma') ||
-           voice.name.toLowerCase().includes('serena') ||
-           voice.name.toLowerCase().includes('fiona') ||
-           voice.name.toLowerCase().includes('victoria'))
-        ),
-        // Look for voices explicitly marked as female
-        voices.find(voice => 
-          voice.lang.includes('en-GB') && 
-          voice.name.toLowerCase().includes('female')
-        ),
-        // Look for common female voice names in any English variant
-        voices.find(voice => 
-          voice.lang.startsWith('en') && 
-          (voice.name.toLowerCase().includes('kate') || 
-           voice.name.toLowerCase().includes('emma') ||
-           voice.name.toLowerCase().includes('serena') ||
-           voice.name.toLowerCase().includes('samantha') ||
-           voice.name.toLowerCase().includes('susan') ||
-           voice.name.toLowerCase().includes('fiona') ||
-           voice.name.toLowerCase().includes('victoria') ||
-           voice.name.toLowerCase().includes('zira') ||
-           voice.name.toLowerCase().includes('hazel'))
-        ),
-        // Look for any voice marked as female
-        voices.find(voice => 
-          voice.lang.startsWith('en') && 
-          voice.name.toLowerCase().includes('female')
-        ),
-        // Filter British voices to exclude obviously male names
-        voices.find(voice => 
-          voice.lang.includes('en-GB') && 
-          !voice.name.toLowerCase().includes('daniel') &&
-          !voice.name.toLowerCase().includes('david') &&
-          !voice.name.toLowerCase().includes('george') &&
-          !voice.name.toLowerCase().includes('male')
-        ),
-        // Last resort: any English voice that doesn't sound male
-        voices.find(voice => 
-          voice.lang.startsWith('en') && 
-          !voice.name.toLowerCase().includes('daniel') &&
-          !voice.name.toLowerCase().includes('david') &&
-          !voice.name.toLowerCase().includes('george') &&
-          !voice.name.toLowerCase().includes('male')
-        )
-      ];
-
-      // Use the first available preferred voice
-      const selectedVoice = preferredVoices.find(voice => voice !== undefined);
-      if (selectedVoice) {
-        utterance.voice = selectedVoice;
-        console.log('Selected voice:', selectedVoice.name, selectedVoice.lang);
-      } else {
-        console.log('No female voice found, using default');
-      }
-      
-      // Enhanced natural speech settings for female voice
-      utterance.rate = 0.85; // Natural speaking pace
-      utterance.pitch = 1.2; // Higher pitch to ensure female sound
-      utterance.volume = 0.9; // Comfortable volume level
-      
-      // Force female characteristics if no female voice was found
-      if (!selectedVoice || !selectedVoice.name.toLowerCase().match(/(female|kate|emma|serena|samantha|susan|fiona|victoria|zira|hazel)/)) {
-        utterance.pitch = 1.3; // Even higher pitch to simulate female voice
-      }
-      
-      // Add natural pauses by preprocessing text
-      const naturalText = text
-        .replace(/\./g, '... ') // Longer pause after periods
-        .replace(/,/g, ', ') // Short pause after commas
-        .replace(/:/g, ': ') // Pause after colons
-        .replace(/;/g, '; ') // Pause after semicolons
-        .replace(/Year (\d+)/g, 'In the year $1') // More natural year reading
-        .replace(/Key figures:/g, 'The key figures involved were:'); // More conversational
-      
-      utterance.text = naturalText;
-
-      // Set up event handlers
-      utterance.onstart = () => setSpeaking(eventId);
-      utterance.onend = () => setSpeaking(null);
-      utterance.onerror = () => setSpeaking(null);
-
-      // Start speaking
-      speechSynthesis.speak(utterance);
-    };
-
-    // Load voices if not already loaded
-    if (speechSynthesis.getVoices().length === 0) {
-      speechSynthesis.addEventListener('voiceschanged', loadVoices, { once: true });
-    } else {
-      loadVoices();
-    }
-  };
 
   if (!selectedTopic) {
     return (
@@ -468,8 +240,7 @@ export default function TimelinePage() {
                 </p>
                 </div>
                 <div className="flex items-center text-xs text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-800 px-2 py-1 rounded-full mt-2 sm:mt-0 sm:ml-4">
-                  <Volume2 className="h-3 w-3 mr-1" />
-                  Female Voice Available
+                  🎵 Narration Available
                 </div>
               </div>
             </div>
@@ -556,207 +327,170 @@ export default function TimelinePage() {
       </div>
 
       {/* Timeline Content */}
-      <div className="container mx-auto max-w-4xl p-4">
-        {isLoading ? (
-          <div className="text-center py-8 sm:py-12">
-            <div className="animate-spin rounded-full h-8 w-8 sm:h-12 sm:w-12 border-b-2 border-blue-600 dark:border-blue-400 mx-auto"></div>
-            <p className="mt-4 text-base sm:text-base text-gray-600 dark:text-gray-400">Loading timeline events...</p>
-          </div>
-        ) : (
-          <div className="relative max-w-6xl mx-auto">
-            {/* Central Timeline Line */}
-            <div className="absolute left-1/2 top-0 bottom-0 w-1 bg-gradient-to-b from-blue-600 via-purple-600 to-red-600 transform -translate-x-1/2 shadow-sm"></div>
-            
-            <div className="space-y-8 sm:space-y-12">
-              {events?.sort((a, b) => a.year - b.year).map((event, index) => {
-                const isEven = index % 2 === 0;
-                return (
-                  <div key={event.id} className="relative">
-                    {/* Timeline Dot */}
-                    <div className={`absolute left-1/2 w-12 h-12 sm:w-16 sm:h-16 ${selectedTopicData?.bgColor || 'bg-gradient-to-br from-blue-500 to-purple-600'} rounded-full border-4 border-white dark:border-gray-800 shadow-lg flex items-center justify-center transform -translate-x-1/2 z-10`}>
-                      <span className="font-bold text-xs sm:text-sm text-white">{event.year}</span>
-                    </div>
-                    
-                    {/* Event Content */}
-                    <div className={`flex flex-col lg:flex-row lg:items-center ${isEven ? 'lg:flex-row' : 'lg:flex-row-reverse'} mt-6 sm:mt-8`}>
-                      {/* Event Card */}
-                      <div className={`w-full lg:w-5/12 ${isEven ? 'lg:pr-8' : 'lg:pl-8'}`}>
-                        <Card className="shadow-md hover:shadow-lg transition-shadow bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
-                          <CardHeader className="pb-3">
-                            <div className="flex flex-col space-y-3 sm:flex-row sm:items-start sm:justify-between sm:space-y-0">
-                              <div className="flex-1 min-w-0">
-                                <div className="flex flex-col space-y-2 sm:flex-row sm:items-center sm:space-y-0 sm:space-x-2 mb-2">
-                                  <Badge className={`${getImportanceColor(event.importance)} text-xs w-fit`}>
-                                    Level {event.importance}
-                                  </Badge>
-                                  <div className="flex items-center space-x-1">
-                                    {getImportanceStars(event.importance)}
-                                  </div>
-                                </div>
-                                <CardTitle className="text-lg sm:text-lg text-gray-900 dark:text-white line-clamp-2">{event.title}</CardTitle>
-                                <div className="flex flex-col space-y-1 sm:flex-row sm:items-center sm:space-y-0 sm:space-x-2 text-sm sm:text-sm text-gray-500 dark:text-gray-400 mt-1">
-                                  <div className="flex items-center">
-                                    <Clock className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
-                                    <span>{event.year}</span>
-                                  </div>
-                                  {event.keyFigures && (
-                                    <div className="flex items-center">
-                                      <span className="hidden sm:inline mx-2">•</span>
-                                      <Users className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
-                                      <span>Key Figures</span>
-                                    </div>
-                                  )}
-                                </div>
-                              </div>
-                              
-                              <div className="flex items-center space-x-1 sm:space-x-2">
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => generateAINarration(event)}
-                                  disabled={isGeneratingAudio === event.id}
-                                  className="p-1 sm:p-2 text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20"
-                                  title="Generate AI narration"
-                                >
-                                  {isGeneratingAudio === event.id ? (
-                                    <div className="animate-spin rounded-full h-4 w-4 sm:h-5 sm:w-5 border-b-2 border-blue-600"></div>
-                                  ) : (
-                                    <Volume2 className="h-4 w-4 sm:h-5 sm:w-5" />
-                                  )}
-                                </Button>
-                                
-                                {currentAudio && (
-                                  <>
-                                    <Button
-                                      variant="ghost"
-                                      size="sm"
-                                      onClick={togglePlayPause}
-                                      className="p-1 sm:p-2 text-gray-500 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20"
-                                      title={isPlaying ? "Pause" : "Play"}
-                                    >
-                                      {isPlaying ? <Pause className="h-4 w-4 sm:h-5 sm:w-5" /> : <Play className="h-4 w-4 sm:h-5 sm:w-5" />}
-                                    </Button>
-                                    
-                                    <Button
-                                      variant="ghost"
-                                      size="sm"
-                                      onClick={toggleMute}
-                                      className="p-1 sm:p-2 text-gray-500 dark:text-gray-400 hover:text-orange-600 dark:hover:text-orange-400 hover:bg-orange-50 dark:hover:bg-orange-900/20"
-                                      title={isMuted ? "Unmute" : "Mute"}
-                                    >
-                                      {isMuted || volume === 0 ? <VolumeX className="h-4 w-4 sm:h-5 sm:w-5" /> : <Volume2 className="h-4 w-4 sm:h-5 sm:w-5" />}
-                                    </Button>
-                                  </>
-                                )}
-                              </div>
-                            </div>
-                          </CardHeader>
-                          <CardContent className="pt-0">
-                            <p className="text-base sm:text-base text-gray-700 dark:text-gray-300 mb-3">{event.description}</p>
-                            
-                            {event.keyFigures && (
-                              <div className="mb-3">
-                                <p className="text-sm sm:text-sm font-medium text-gray-900 dark:text-white mb-1">Key Figures:</p>
-                                <p className="text-sm sm:text-sm text-gray-600 dark:text-gray-400">{event.keyFigures}</p>
-                              </div>
-                            )}
-                            
-                            {event.details && (
-                              <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-2 sm:p-3">
-                                <p className="text-sm sm:text-sm text-gray-700 dark:text-gray-300">{event.details}</p>
-                              </div>
-                            )}
-
-                            {/* Browser TTS Voice Narration */}
-                            <div className="mt-4">
-                              <NarrateButton
-                                eventId={event.id}
-                                title={event.title}
-                                description={event.description}
-                                details={event.details}
-                                variant="outline"
-                                size="sm"
-                                className="w-full"
-                              />
-                            </div>
-                            
-                            {selectedTopic === 'british_sportsmen' && (
-                              <div className="mt-3 sm:mt-4 p-3 sm:p-4 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 rounded-lg">
-                                <div className="flex flex-col space-y-3 sm:flex-row sm:items-start sm:justify-between sm:space-y-0 sm:gap-4">
-                                  <div className="flex-1 min-w-0">
-                                    {event.sport && (
-                                      <div className="mb-2">
-                                        <Badge className="bg-emerald-100 dark:bg-emerald-800 text-emerald-800 dark:text-emerald-200 text-xs">
-                                          {event.sport}
-                                        </Badge>
-                                      </div>
-                                    )}
-                                    {event.accomplishment && (
-                                      <div className="mb-3">
-                                        <h5 className="font-medium text-emerald-900 dark:text-emerald-100 mb-1 text-sm sm:text-sm">Achievement:</h5>
-                                        <p className="text-sm sm:text-sm text-emerald-800 dark:text-emerald-200">{event.accomplishment}</p>
-                                      </div>
-                                    )}
-                                    <div className="flex items-center gap-2">
-                                      <Video className="h-3 w-3 sm:h-4 sm:w-4 text-emerald-600 dark:text-emerald-400" />
-                                      <span className="text-sm sm:text-sm font-medium text-emerald-900 dark:text-emerald-100">Video Link:</span>
-                                    </div>
-                                  </div>
-                                  <div className="flex-shrink-0">
-                                    {event.videoLink ? (
-                                      <Button
-                                        size="sm"
-                                        className="bg-emerald-600 hover:bg-emerald-700 text-white text-sm sm:text-sm"
-                                        onClick={() => window.open(event.videoLink, '_blank')}
-                                      >
-                                        <Play className="h-3 w-3 mr-1" />
-                                        Watch
-                                        <ExternalLink className="h-3 w-3 ml-1" />
-                                      </Button>
-                                    ) : (
-                                      <div className="p-2 border-2 border-dashed border-emerald-300 rounded-lg text-center min-w-[80px] sm:min-w-[100px]">
-                                        <Video className="h-3 w-3 sm:h-4 sm:w-4 text-emerald-400 mx-auto mb-1" />
-                                        <p className="text-sm text-emerald-600">Video link space</p>
-                                        <p className="text-sm text-emerald-500">To be added</p>
-                                      </div>
-                                    )}
-                                  </div>
-                                </div>
-                              </div>
-                            )}
-                          </CardContent>
-                        </Card>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-
-            {events && events.length === 0 && (
+      <div className="container mx-auto max-w-7xl p-4">
+        {/* Learning Modules Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
+          
+          {/* Left Column - Main Content */}
+          <div className="lg:col-span-2 space-y-6 lg:space-y-8">
+            {isLoading ? (
               <div className="text-center py-8 sm:py-12">
-                <Calendar className="h-10 w-10 sm:h-12 sm:w-12 text-gray-700 dark:text-gray-300 mx-auto mb-3 sm:mb-4 font-bold" />
-                <h3 className="text-lg sm:text-lg font-medium text-gray-900 dark:text-white mb-2">No Events Found</h3>
-                <p className="text-base sm:text-base text-gray-600 dark:text-gray-400">This timeline topic is being prepared. Please check back soon.</p>
+                <div className="animate-spin rounded-full h-8 w-8 sm:h-12 sm:w-12 border-b-2 border-blue-600 dark:border-blue-400 mx-auto"></div>
+                <p className="mt-4 text-base sm:text-base text-gray-600 dark:text-gray-400">Loading timeline events...</p>
+              </div>
+            ) : (
+              <div className="relative max-w-6xl mx-auto">
+                {/* Central Timeline Line */}
+                <div className="absolute left-1/2 top-0 bottom-0 w-1 bg-gradient-to-b from-blue-600 via-purple-600 to-red-600 transform -translate-x-1/2 shadow-sm"></div>
+                
+                <div className="space-y-8 sm:space-y-12">
+                  {events?.sort((a, b) => a.year - b.year).map((event, index) => {
+                    const isEven = index % 2 === 0;
+                    return (
+                      <div key={event.id} className="relative">
+                        {/* Timeline Dot */}
+                        <div className={`absolute left-1/2 w-12 h-12 sm:w-16 sm:h-16 ${selectedTopicData?.bgColor || 'bg-gradient-to-br from-blue-500 to-purple-600'} rounded-full border-4 border-white dark:border-gray-800 shadow-lg flex items-center justify-center transform -translate-x-1/2 z-10`}>
+                          <span className="font-bold text-xs sm:text-sm text-white">{event.year}</span>
+                        </div>
+                        
+                        {/* Event Content */}
+                        <div className={`flex flex-col lg:flex-row lg:items-center ${isEven ? 'lg:flex-row' : 'lg:flex-row-reverse'} mt-6 sm:mt-8`}>
+                          {/* Event Card */}
+                          <div className={`w-full lg:w-5/12 ${isEven ? 'lg:pr-8' : 'lg:pl-8'}`}>
+                            <Card className="shadow-md hover:shadow-lg transition-shadow bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
+                              <CardHeader className="pb-3">
+                                <div className="flex flex-col space-y-3 sm:flex-row sm:items-start sm:justify-between sm:space-y-0">
+                                  <div className="flex-1 min-w-0">
+                                    <div className="flex flex-col space-y-2 sm:flex-row sm:items-center sm:space-y-0 sm:space-x-2 mb-2">
+                                      <Badge className={`${getImportanceColor(event.importance)} text-xs w-fit`}>
+                                        Level {event.importance}
+                                      </Badge>
+                                      <div className="flex items-center space-x-1">
+                                        {getImportanceStars(event.importance)}
+                                      </div>
+                                    </div>
+                                    <CardTitle className="text-lg sm:text-lg text-gray-900 dark:text-white line-clamp-2">{event.title}</CardTitle>
+                                    <div className="flex flex-col space-y-1 sm:flex-row sm:items-center sm:space-y-0 sm:space-x-2 text-sm sm:text-sm text-gray-500 dark:text-gray-400 mt-1">
+                                      <div className="flex items-center">
+                                        <Clock className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
+                                        <span>{event.year}</span>
+                                      </div>
+                                      {event.keyFigures && (
+                                        <div className="flex items-center">
+                                          <span className="hidden sm:inline mx-2">•</span>
+                                          <Users className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
+                                          <span>Key Figures</span>
+                                        </div>
+                                      )}
+                                    </div>
+                                  </div>
+                                  
+                                </div>
+                              </CardHeader>
+                              <CardContent className="pt-0">
+                                <p className="text-base sm:text-base text-gray-700 dark:text-gray-300 mb-3">{event.description}</p>
+                                
+                                {event.keyFigures && (
+                                  <div className="mb-3">
+                                    <p className="text-sm sm:text-sm font-medium text-gray-900 dark:text-white mb-1">Key Figures:</p>
+                                    <p className="text-sm sm:text-sm text-gray-600 dark:text-gray-400">{event.keyFigures}</p>
+                                  </div>
+                                )}
+                                
+                                {event.details && (
+                                  <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-2 sm:p-3">
+                                    <p className="text-sm sm:text-sm text-gray-700 dark:text-gray-300">{event.details}</p>
+                                  </div>
+                                )}
+
+                                {/* Enhanced AI Voice Narration */}
+                                <div className="mt-4">
+                                  <NarrateButton
+                                    eventId={event.id}
+                                    title={event.title}
+                                    description={event.description}
+                                    details={event.details}
+                                    variant="outline"
+                                    size="sm"
+                                    className="w-full"
+                                    allEvents={allEvents}
+                                  />
+                                </div>
+                                
+                                {selectedTopic === 'british_sportsmen' && (
+                                  <div className="mt-3 sm:mt-4 p-3 sm:p-4 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 rounded-lg">
+                                    <div className="flex flex-col space-y-3 sm:flex-row sm:items-start sm:justify-between sm:space-y-0 sm:gap-4">
+                                      <div className="flex-1 min-w-0">
+                                        {event.sport && (
+                                          <div className="mb-2">
+                                            <Badge className="bg-emerald-100 dark:bg-emerald-800 text-emerald-800 dark:text-emerald-200 text-xs">
+                                              {event.sport}
+                                            </Badge>
+                                          </div>
+                                        )}
+                                        {event.accomplishment && (
+                                          <div className="mb-3">
+                                            <h5 className="font-medium text-emerald-900 dark:text-emerald-100 mb-1 text-sm sm:text-sm">Achievement:</h5>
+                                            <p className="text-sm sm:text-sm text-emerald-800 dark:text-emerald-200">{event.accomplishment}</p>
+                                          </div>
+                                        )}
+                                        <div className="flex items-center gap-2">
+                                          <Video className="h-3 w-3 sm:h-4 sm:w-4 text-emerald-600 dark:text-emerald-400" />
+                                          <span className="text-sm sm:text-sm font-medium text-emerald-900 dark:text-emerald-100">Video Link:</span>
+                                        </div>
+                                      </div>
+                                      <div className="flex-shrink-0">
+                                        {event.videoLink ? (
+                                          <Button
+                                            size="sm"
+                                            className="bg-emerald-600 hover:bg-emerald-700 text-white text-sm sm:text-sm"
+                                            onClick={() => window.open(event.videoLink, '_blank')}
+                                          >
+                                            <Play className="h-3 w-3 mr-1" />
+                                            Watch
+                                            <ExternalLink className="h-3 w-3 ml-1" />
+                                          </Button>
+                                        ) : (
+                                          <div className="p-2 border-2 border-dashed border-emerald-300 rounded-lg text-center min-w-[80px] sm:min-w-[100px]">
+                                            <Video className="h-3 w-3 sm:h-4 sm:w-4 text-emerald-400 mx-auto mb-1" />
+                                            <p className="text-sm text-emerald-600">Video link space</p>
+                                            <p className="text-sm text-emerald-500">To be added</p>
+                                          </div>
+                                        )}
+                                      </div>
+                                    </div>
+                                  </div>
+                                )}
+                              </CardContent>
+                            </Card>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {events && events.length === 0 && (
+                  <div className="text-center py-8 sm:py-12">
+                    <Calendar className="h-10 w-10 sm:h-12 sm:w-12 text-gray-700 dark:text-gray-300 mx-auto mb-3 sm:mb-4 font-bold" />
+                    <h3 className="text-lg sm:text-lg font-medium text-gray-900 dark:text-white mb-2">No Events Found</h3>
+                    <p className="text-base sm:text-base text-gray-600 dark:text-gray-400">This timeline topic is being prepared. Please check back soon.</p>
+                  </div>
+                )}
               </div>
             )}
           </div>
-        )}
+
+          {/* Right Column - Sidebar */}
+          <div className="space-y-3 lg:space-y-4">
+            {/* Fixed TTS Narration Group */}
+            <div className="sticky top-20 space-y-6 lg:space-y-4 z-10">
+              <GlobalTTSNarration />
+            </div>
+          </div>
+        </div>
       </div>
 
-      {/* Audio Element */}
-      <audio
-        ref={audioRef}
-        onEnded={() => setIsPlaying(false)}
-        onVolumeChange={() => {
-          if (audioRef.current) {
-            setVolume(audioRef.current.volume);
-            setIsMuted(audioRef.current.muted);
-          }
-        }}
-        onPlay={() => setIsPlaying(true)}
-        onPause={() => setIsPlaying(false)}
-      />
 
       <MobileNav />
       <FloatingChatbot />
