@@ -1,0 +1,39 @@
+[
+  {
+    "id": "test-1",
+    "type": "true-false-question",
+    "data": {
+      "statement": "The UK Parliament consists of the House of Commons and the House of Lords.",
+      "isTrue": true,
+      "explanation": "The UK Parliament is bicameral, consisting of two houses: the House of Commons (elected) and the House of Lords (appointed and hereditary peers).",
+      "category": "Government",
+      "difficulty": "beginner",
+      "tags": ["parliament", "government", "bicameral"]
+    }
+  },
+  {
+    "id": "test-2", 
+    "type": "matching-pair",
+    "data": {
+      "left": "Battle of Hastings",
+      "right": "1066",
+      "category": "History",
+      "difficulty": "intermediate",
+      "explanation": "The Battle of Hastings was fought on 14 October 1066 between the Norman-French army of William, the Duke of Normandy, and an English army under the Anglo-Saxon King Harold Godwinson.",
+      "tags": ["norman conquest", "william the conqueror", "medieval history"]
+    }
+  },
+  {
+    "id": "test-3",
+    "type": "flip-card",
+    "data": {
+      "front": "What are the four countries that make up the United Kingdom?",
+      "back": "England, Scotland, Wales, and Northern Ireland",
+      "category": "Geography",
+      "difficulty": "beginner",
+      "explanation": "The United Kingdom is a sovereign state made up of four constituent countries: England, Scotland, Wales, and Northern Ireland.",
+      "tags": ["uk geography", "constituent countries", "british isles"]
+    }
+  }
+]
+

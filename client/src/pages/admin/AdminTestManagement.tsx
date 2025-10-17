@@ -101,13 +101,22 @@ const AdminTestManagement: React.FC = () => {
         fetch('/api/mock-tests')
       ]);
       
+      // Check if responses are ok
+      if (!practiceResponse.ok || !mockResponse.ok) {
+        throw new Error(`API request failed: ${practiceResponse.status} ${mockResponse.status}`);
+      }
+      
       const practiceData = await practiceResponse.json();
       const mockData = await mockResponse.json();
       
-      setPracticeTests(practiceData);
-      setMockTests(mockData);
+      // Ensure we always set arrays, even if API returns non-array data
+      setPracticeTests(Array.isArray(practiceData) ? practiceData : []);
+      setMockTests(Array.isArray(mockData) ? mockData : []);
     } catch (error) {
       console.error('Error fetching tests:', error);
+      // Set empty arrays on error to prevent further issues
+      setPracticeTests([]);
+      setMockTests([]);
     } finally {
       setLoading(false);
     }
@@ -124,7 +133,7 @@ const AdminTestManagement: React.FC = () => {
       console.error('Error fetching analytics:', error);
       
       // Check if it's an authentication error
-      if (error.message && error.message.includes('401')) {
+      if (error instanceof Error && error.message && error.message.includes('401')) {
         console.log('Authentication required. Please log in as admin.');
         // Set sample data for demo purposes
         setAnalytics({
@@ -176,7 +185,7 @@ const AdminTestManagement: React.FC = () => {
       fetchTests();
     } catch (error) {
       console.error('Error creating test:', error);
-      alert('Failed to create test: ' + error.message);
+      alert('Failed to create test: ' + (error instanceof Error ? error.message : 'Unknown error'));
     }
   };
 
@@ -265,6 +274,12 @@ const AdminTestManagement: React.FC = () => {
   };
 
   const filteredTests = (tests: Test[]) => {
+    // Safety check to ensure tests is an array
+    if (!Array.isArray(tests)) {
+      console.warn('filteredTests received non-array data:', tests);
+      return [];
+    }
+    
     return tests.filter(test => {
       const matchesSearch = test.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
                            test.description.toLowerCase().includes(searchTerm.toLowerCase());
