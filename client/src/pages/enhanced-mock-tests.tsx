@@ -22,25 +22,33 @@ export default function EnhancedMockTestsPage() {
   const [difficultyFilter, setDifficultyFilter] = useState<string>("all");
   const [sortBy, setSortBy] = useState<string>("category");
 
-  // Filter logic
-  const filteredTests = mockTests?.filter((test) => {
-    let matchesDifficulty = true;
-    if (difficultyFilter !== "all") {
-      const filterValue = parseInt(difficultyFilter);
-      if (filterValue === 1) {
-        // Beginner: difficulty 1
-        matchesDifficulty = test.difficulty === 1;
-      } else if (filterValue === 3) {
-        // Intermediate: difficulty 2, 3, 4
-        matchesDifficulty = test.difficulty >= 2 && test.difficulty <= 4;
-      } else if (filterValue === 5) {
-        // Expert: difficulty 5
-        matchesDifficulty = test.difficulty === 5;
-      }
+  // Filter logic with safety check
+  const filteredTests = (() => {
+    // Safety check to ensure mockTests is an array
+    if (!Array.isArray(mockTests)) {
+      console.warn('filteredTests received non-array data:', mockTests);
+      return [];
     }
     
-    return matchesDifficulty;
-  }) || [];
+    return mockTests.filter((test) => {
+      let matchesDifficulty = true;
+      if (difficultyFilter !== "all") {
+        const filterValue = parseInt(difficultyFilter);
+        if (filterValue === 1) {
+          // Beginner: difficulty 1
+          matchesDifficulty = test.difficulty === 1;
+        } else if (filterValue === 3) {
+          // Intermediate: difficulty 2, 3, 4
+          matchesDifficulty = test.difficulty >= 2 && test.difficulty <= 4;
+        } else if (filterValue === 5) {
+          // Expert: difficulty 5
+          matchesDifficulty = test.difficulty === 5;
+        }
+      }
+      
+      return matchesDifficulty;
+    });
+  })();
 
   // Sort logic
   const sortedTests = [...filteredTests].sort((a, b) => {
@@ -129,7 +137,7 @@ export default function EnhancedMockTestsPage() {
               <div className="flex items-center space-x-2">
                 <Target className="h-8 w-8 text-blue-600 dark:text-blue-400" />
                 <div>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-white">{mockTests?.length || 0}</p>
+                  <p className="text-2xl font-bold text-gray-900 dark:text-white">{Array.isArray(mockTests) ? mockTests.length : 0}</p>
                   <p className="text-sm text-gray-600 dark:text-gray-400">Total Tests</p>
                 </div>
               </div>
@@ -141,7 +149,7 @@ export default function EnhancedMockTestsPage() {
                 <CheckCircle className="h-8 w-8 text-green-600 dark:text-green-400" />
                 <div>
                   <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                    {mockTests && mockTests.length > 0 ? Math.round(mockTests.reduce((sum, test) => sum + (test.questions?.length || 0), 0) / mockTests.length) : 0}
+                    {Array.isArray(mockTests) && mockTests.length > 0 ? Math.round(mockTests.reduce((sum, test) => sum + (test.questions?.length || 0), 0) / mockTests.length) : 0}
                   </p>
                   <p className="text-sm text-gray-600 dark:text-gray-400">Avg Questions</p>
                 </div>
