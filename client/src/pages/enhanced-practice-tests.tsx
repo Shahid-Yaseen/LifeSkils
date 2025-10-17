@@ -3,11 +3,10 @@ import { useLocation } from "wouter";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import MobileNav from "@/components/mobile-nav";
 import FloatingChatbot from "@/components/floating-chatbot";
-import { Clock, Target, CheckCircle, BarChart3, Filter, Search, Star, TrendingUp } from "lucide-react";
+import { Clock, Target, CheckCircle, BarChart3, Filter, Star, TrendingUp } from "lucide-react";
 import { 
   useEnhancedPracticeTests, 
   getDifficultyColor, 
@@ -20,22 +19,31 @@ export default function EnhancedPracticeTestsPage() {
   const [, setLocation] = useLocation();
   const { data: tests, isLoading, error } = useEnhancedPracticeTests();
   
-  // Filter and search state
-  const [searchTerm, setSearchTerm] = useState("");
+  // Filter state
   const [difficultyFilter, setDifficultyFilter] = useState<string>("all");
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
-  const [sortBy, setSortBy] = useState<string>("order");
+  const [sortBy, setSortBy] = useState<string>("category");
 
-  // Filter and search logic
+  // Filter logic
   const filteredTests = tests?.filter((test) => {
-    const matchesSearch = test.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         test.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         test.category.toLowerCase().includes(searchTerm.toLowerCase());
+    let matchesDifficulty = true;
+    if (difficultyFilter !== "all") {
+      const filterValue = parseInt(difficultyFilter);
+      if (filterValue === 1) {
+        // Beginner: difficulty 1
+        matchesDifficulty = test.difficulty === 1;
+      } else if (filterValue === 3) {
+        // Intermediate: difficulty 2, 3, 4
+        matchesDifficulty = test.difficulty >= 2 && test.difficulty <= 4;
+      } else if (filterValue === 5) {
+        // Expert: difficulty 5
+        matchesDifficulty = test.difficulty === 5;
+      }
+    }
     
-    const matchesDifficulty = difficultyFilter === "all" || test.difficulty.toString() === difficultyFilter;
     const matchesCategory = categoryFilter === "all" || test.category === categoryFilter;
     
-    return matchesSearch && matchesDifficulty && matchesCategory;
+    return matchesDifficulty && matchesCategory;
   }) || [];
 
   // Sort logic
@@ -44,9 +52,7 @@ export default function EnhancedPracticeTestsPage() {
       case "difficulty":
         return a.difficulty - b.difficulty;
       case "category":
-        return a.category.localeCompare(b.category);
-      case "title":
-        return a.title.localeCompare(b.title);
+        return (a.category || "").localeCompare(b.category || "");
       case "order":
       default:
         return a.orderIndex - b.orderIndex;
@@ -173,31 +179,18 @@ export default function EnhancedPracticeTestsPage() {
           </Card>
         </div>
 
-        {/* Enhanced Filters and Search */}
+        {/* Enhanced Filters */}
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4 sm:p-6 mb-8">
-          <div className="flex flex-col space-y-4 lg:flex-row lg:space-y-0 lg:gap-4">
-            <div className="flex-1">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                <Input
-                  placeholder="Search tests by title, description, or category..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 w-full"
-                />
-              </div>
-            </div>
-            <div className="flex flex-col space-y-3 sm:flex-row sm:space-y-0 sm:gap-4">
+          <div className="flex flex-col space-y-4 lg:flex-row lg:space-y-0 lg:gap-4 lg:items-center">
+            <div className="flex flex-col space-y-3 sm:flex-row sm:space-y-0 sm:gap-4 flex-1">
               <Select value={difficultyFilter} onValueChange={setDifficultyFilter}>
                 <SelectTrigger className="w-full sm:w-40">
-                  <SelectValue placeholder="Difficulty" />
+                  <SelectValue placeholder="Level" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Difficulties</SelectItem>
+                  <SelectItem value="all">All Levels</SelectItem>
                   <SelectItem value="1">Beginner</SelectItem>
-                  <SelectItem value="2">Easy</SelectItem>
-                  <SelectItem value="3">Medium</SelectItem>
-                  <SelectItem value="4">Hard</SelectItem>
+                  <SelectItem value="3">Intermediate</SelectItem>
                   <SelectItem value="5">Expert</SelectItem>
                 </SelectContent>
               </Select>
@@ -223,10 +216,24 @@ export default function EnhancedPracticeTestsPage() {
                 <SelectContent>
                   <SelectItem value="order">Order</SelectItem>
                   <SelectItem value="difficulty">Difficulty</SelectItem>
-                  <SelectItem value="category">Category</SelectItem>
-                  <SelectItem value="title">Title</SelectItem>
+                  <SelectItem value="category">CategorySelect</SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+            
+            {/* Reset Button */}
+            <div className="flex justify-center lg:justify-end">
+              <Button 
+                onClick={() => {
+                  setDifficultyFilter("all");
+                  setCategoryFilter("all");
+                  setSortBy("category");
+                }}
+                variant="outline"
+                className="w-full sm:w-auto"
+              >
+                Reset Filters
+              </Button>
             </div>
           </div>
         </div>
@@ -300,15 +307,14 @@ export default function EnhancedPracticeTestsPage() {
             <Target className="h-12 w-12 sm:h-16 sm:w-16 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
             <h3 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white mb-2">No Tests Found</h3>
             <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400 max-w-md mx-auto">
-              {searchTerm || difficultyFilter !== "all" || categoryFilter !== "all" 
+              {difficultyFilter !== "all" || categoryFilter !== "all" 
                 ? "Try adjusting your filters to see more tests."
                 : "Enhanced practice tests are being prepared. Please check back soon."
               }
             </p>
-            {(searchTerm || difficultyFilter !== "all" || categoryFilter !== "all") && (
+            {(difficultyFilter !== "all" || categoryFilter !== "all") && (
               <Button 
                 onClick={() => {
-                  setSearchTerm("");
                   setDifficultyFilter("all");
                   setCategoryFilter("all");
                 }}

@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Clock, CheckCircle, XCircle, RotateCcw, ArrowLeft, ArrowRight, Trophy, Target, BarChart3, Timer } from "lucide-react";
+import { Clock, CheckCircle, XCircle, RotateCcw, ArrowLeft, ArrowRight, Trophy, Target, BarChart3, Timer, X } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { 
   useEnhancedMockTest, 
@@ -68,6 +68,14 @@ export default function EnhancedMockTestPage() {
     const newAnswers = [...answers];
     newAnswers[currentQuestion] = answerIndex;
     setAnswers(newAnswers);
+    
+    // Auto-advance to next question after answering
+    setTimeout(() => {
+      if (currentQuestion < ((test as unknown as EnhancedTest)?.questions.length || 0) - 1) {
+        setCurrentQuestion(currentQuestion + 1);
+        setSelectedAnswer(answers[currentQuestion + 1] !== -1 ? answers[currentQuestion + 1] : null);
+      }
+    }, 500); // Small delay to show the selected answer
   };
 
   const handleNext = () => {
@@ -81,6 +89,13 @@ export default function EnhancedMockTestPage() {
     if (currentQuestion > 0) {
       setCurrentQuestion(currentQuestion - 1);
       setSelectedAnswer(answers[currentQuestion - 1] !== -1 ? answers[currentQuestion - 1] : null);
+    }
+  };
+
+  const handleQuestionNavigation = (questionIndex: number) => {
+    if (questionIndex >= 0 && questionIndex < ((test as unknown as EnhancedTest)?.questions.length || 0)) {
+      setCurrentQuestion(questionIndex);
+      setSelectedAnswer(answers[questionIndex] !== -1 ? answers[questionIndex] : null);
     }
   };
 
@@ -260,7 +275,16 @@ export default function EnhancedMockTestPage() {
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 p-4">
         <div className="container mx-auto max-w-4xl">
           {/* Enhanced Results Header */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4 sm:p-6 mb-6">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4 sm:p-6 mb-6 relative">
+            {/* Close Button */}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setLocation("/mock-tests")}
+              className="absolute top-4 right-4 p-3 hover:bg-gray-100 dark:hover:bg-gray-700"
+            >
+              <X className="h-8 w-8 text-gray-600 dark:text-gray-400" />
+            </Button>
             <div className="text-center">
               <div className={`inline-flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 rounded-full mb-4 ${
                 testResults.passed 
@@ -324,11 +348,11 @@ export default function EnhancedMockTestPage() {
                       <CardTitle className="text-sm text-gray-900 dark:text-white">Question {index + 1}</CardTitle>
                       <div className="flex gap-2">
                         {isCorrect && <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />}
-                        {isAnswered && !isCorrect && <XCircle className="h-4 w-4 text-red-600 dark:text-red-400" />}
+                        {isAnswered && !isCorrect && <XCircle className="h-5 w-5 text-red-600 dark:text-red-400" />}
                         {!isAnswered && <Clock className="h-4 w-4 text-gray-400 dark:text-gray-500" />}
                       </div>
                     </div>
-                    <CardDescription className="text-sm text-gray-700 dark:text-gray-300">{question.question}</CardDescription>
+                    <CardDescription className="text-base font-bold text-gray-700 dark:text-gray-300">{question.question}</CardDescription>
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-2">
@@ -351,7 +375,7 @@ export default function EnhancedMockTestPage() {
                               <span className="font-medium mr-2 text-gray-900 dark:text-white">{String.fromCharCode(65 + optionIndex)}.</span>
                               <span className={`${isCorrectAnswer ? 'font-semibold' : ''} text-gray-900 dark:text-white`}>{option}</span>
                               {isCorrectAnswer && <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400 ml-auto" />}
-                              {isUserAnswer && !isCorrectAnswer && <XCircle className="h-4 w-4 text-red-600 dark:text-red-400 ml-auto" />}
+                              {isUserAnswer && !isCorrectAnswer && <XCircle className="h-5 w-5 text-red-600 dark:text-red-400 ml-auto" />}
                             </div>
                           </div>
                         );
@@ -446,35 +470,33 @@ export default function EnhancedMockTestPage() {
       {/* Question Content */}
       <div className="container mx-auto max-w-4xl p-4">
         {/* Quick Navigation - Always Visible */}
-        <div className="flex flex-col space-y-3 sm:flex-row sm:items-center sm:justify-between sm:space-y-0 mb-4 p-3 bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-600">
+        <div className="flex flex-col space-y-3 sm:flex-row sm:items-center sm:space-y-0 sm:gap-4 mb-4 p-3 bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-600">
           <Button
             variant="outline"
             size="sm"
             onClick={handlePrevious}
             disabled={currentQuestion === 0}
-            className="w-full sm:w-auto border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700"
+            className="w-full sm:flex-1 border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700"
           >
             <ArrowLeft className="h-4 w-4 mr-1" />
             Previous
           </Button>
           
-          <div className="flex items-center justify-center">
-            <Button
-              size="sm"
-              onClick={handleFinishTest}
-              disabled={answeredQuestions < (test as unknown as EnhancedTest).questions.length}
-              className="w-full sm:w-auto bg-green-600 hover:bg-green-700 dark:bg-green-600 dark:hover:bg-green-700"
-            >
-              Submit Test
-            </Button>
-          </div>
+          <Button
+            size="sm"
+            onClick={handleFinishTest}
+            disabled={answeredQuestions < (test as unknown as EnhancedTest).questions.length}
+            className="w-full sm:flex-1 bg-green-600 hover:bg-green-700 dark:bg-green-600 dark:hover:bg-green-700"
+          >
+            Submit Test
+          </Button>
 
           <Button
             variant="outline"
             size="sm"
             onClick={handleNext}
             disabled={currentQuestion === (test as unknown as EnhancedTest).questions.length - 1}
-            className="w-full sm:w-auto border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700"
+            className="w-full sm:flex-1 border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700"
           >
             Next
             <ArrowRight className="h-4 w-4 ml-1" />
@@ -483,7 +505,7 @@ export default function EnhancedMockTestPage() {
 
         <Card className="mb-6 bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
           <CardHeader className="pb-3">
-            <CardTitle className="text-base sm:text-lg text-gray-900 dark:text-white">
+            <CardTitle className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white">
               {currentQ.question}
             </CardTitle>
             <CardDescription className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
@@ -514,22 +536,32 @@ export default function EnhancedMockTestPage() {
           </CardContent>
         </Card>
 
-        {/* Bottom Navigation - Duplicate for convenience */}
-        <div className="flex flex-col space-y-2 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
+        {/* Bottom Navigation with Question Number */}
+        <div className="flex flex-col space-y-2 sm:flex-row sm:items-center sm:space-y-0 sm:gap-4">
           <Button
             variant="ghost"
             onClick={handlePrevious}
             disabled={currentQuestion === 0}
-            className="w-full sm:w-auto dark:text-gray-400 dark:hover:bg-gray-700"
+            className="w-full sm:flex-1 dark:text-gray-400 dark:hover:bg-gray-700"
           >
             Previous
           </Button>
+
+          <div className="flex items-center justify-center">
+            <Button
+              variant="outline"
+              size="sm"
+              className="px-4 py-2 bg-blue-50 border-blue-200 text-blue-700 dark:bg-blue-900/20 dark:border-blue-700 dark:text-blue-300"
+            >
+              {currentQuestion + 1}
+            </Button>
+          </div>
 
           <Button
             variant="ghost"
             onClick={handleNext}
             disabled={currentQuestion === (test as unknown as EnhancedTest).questions.length - 1}
-            className="w-full sm:w-auto dark:text-gray-400 dark:hover:bg-gray-700"
+            className="w-full sm:flex-1 dark:text-gray-400 dark:hover:bg-gray-700"
           >
             Next
           </Button>

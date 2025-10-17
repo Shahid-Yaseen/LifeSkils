@@ -3,11 +3,10 @@ import { useLocation } from "wouter";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import MobileNav from "@/components/mobile-nav";
 import FloatingChatbot from "@/components/floating-chatbot";
-import { Clock, Target, CheckCircle, BookOpen, Users, Filter, Search, Star, TrendingUp, BarChart3 } from "lucide-react";
+import { Clock, Target, CheckCircle, BookOpen, Users, Filter, Star, TrendingUp, BarChart3 } from "lucide-react";
 import { 
   useEnhancedMockTests, 
   getDifficultyColor, 
@@ -19,19 +18,28 @@ export default function EnhancedMockTestsPage() {
   const [, setLocation] = useLocation();
   const { data: mockTests, isLoading, error } = useEnhancedMockTests();
   
-  // Filter and search state
-  const [searchTerm, setSearchTerm] = useState("");
+  // Filter state
   const [difficultyFilter, setDifficultyFilter] = useState<string>("all");
-  const [sortBy, setSortBy] = useState<string>("order");
+  const [sortBy, setSortBy] = useState<string>("category");
 
-  // Filter and search logic
+  // Filter logic
   const filteredTests = mockTests?.filter((test) => {
-    const matchesSearch = test.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         test.description.toLowerCase().includes(searchTerm.toLowerCase());
+    let matchesDifficulty = true;
+    if (difficultyFilter !== "all") {
+      const filterValue = parseInt(difficultyFilter);
+      if (filterValue === 1) {
+        // Beginner: difficulty 1
+        matchesDifficulty = test.difficulty === 1;
+      } else if (filterValue === 3) {
+        // Intermediate: difficulty 2, 3, 4
+        matchesDifficulty = test.difficulty >= 2 && test.difficulty <= 4;
+      } else if (filterValue === 5) {
+        // Expert: difficulty 5
+        matchesDifficulty = test.difficulty === 5;
+      }
+    }
     
-    const matchesDifficulty = difficultyFilter === "all" || test.difficulty.toString() === difficultyFilter;
-    
-    return matchesSearch && matchesDifficulty;
+    return matchesDifficulty;
   }) || [];
 
   // Sort logic
@@ -39,8 +47,8 @@ export default function EnhancedMockTestsPage() {
     switch (sortBy) {
       case "difficulty":
         return a.difficulty - b.difficulty;
-      case "title":
-        return a.title.localeCompare(b.title);
+      case "category":
+        return (a.category || "").localeCompare(b.category || "");
       case "order":
       default:
         return a.orderIndex - b.orderIndex;
@@ -89,7 +97,7 @@ export default function EnhancedMockTestsPage() {
         <div className="container mx-auto max-w-6xl px-4 py-4 sm:py-6">
           <div className="flex flex-col space-y-4 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
             <div className="flex-1">
-              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">Enhanced Mock Tests</h1>
+                <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">Mock Tests</h1>
               <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400 mt-1 sm:mt-2">
                 Official-style mock tests with comprehensive analytics and performance tracking
               </p>
@@ -164,31 +172,18 @@ export default function EnhancedMockTestsPage() {
           </Card>
         </div>
 
-        {/* Enhanced Filters and Search */}
+        {/* Enhanced Filters */}
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4 sm:p-6 mb-8">
-          <div className="flex flex-col space-y-4 lg:flex-row lg:space-y-0 lg:gap-4">
-            <div className="flex-1">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                <Input
-                  placeholder="Search mock tests by title or description..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 w-full"
-                />
-              </div>
-            </div>
-            <div className="flex flex-col space-y-3 sm:flex-row sm:space-y-0 sm:gap-4">
+          <div className="flex flex-col space-y-4 lg:flex-row lg:space-y-0 lg:gap-4 lg:items-center">
+            <div className="flex flex-col space-y-3 sm:flex-row sm:space-y-0 sm:gap-4 flex-1">
               <Select value={difficultyFilter} onValueChange={setDifficultyFilter}>
                 <SelectTrigger className="w-full sm:w-40">
-                  <SelectValue placeholder="Difficulty" />
+                  <SelectValue placeholder="Level" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Difficulties</SelectItem>
+                  <SelectItem value="all">All Levels</SelectItem>
                   <SelectItem value="1">Beginner</SelectItem>
-                  <SelectItem value="2">Easy</SelectItem>
-                  <SelectItem value="3">Medium</SelectItem>
-                  <SelectItem value="4">Hard</SelectItem>
+                  <SelectItem value="3">Intermediate</SelectItem>
                   <SelectItem value="5">Expert</SelectItem>
                 </SelectContent>
               </Select>
@@ -200,9 +195,23 @@ export default function EnhancedMockTestsPage() {
                 <SelectContent>
                   <SelectItem value="order">Order</SelectItem>
                   <SelectItem value="difficulty">Difficulty</SelectItem>
-                  <SelectItem value="title">Title</SelectItem>
+                  <SelectItem value="category">CategorySelect</SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+            
+            {/* Reset Button */}
+            <div className="flex justify-center lg:justify-end">
+              <Button 
+                onClick={() => {
+                  setDifficultyFilter("all");
+                  setSortBy("category");
+                }}
+                variant="outline"
+                className="w-full sm:w-auto"
+              >
+                Reset Filters
+              </Button>
             </div>
           </div>
         </div>
@@ -213,7 +222,7 @@ export default function EnhancedMockTestsPage() {
             <div className="flex items-start">
               <Users className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600 dark:text-blue-400 mr-2 mt-0.5 flex-shrink-0" />
               <div>
-                <h3 className="font-medium text-blue-900 dark:text-blue-100 mb-1 text-sm sm:text-base">Enhanced Mock Test Experience</h3>
+                  <h3 className="font-medium text-blue-900 dark:text-blue-100 mb-1 text-sm sm:text-base">Mock Test Experience</h3>
                 <p className="text-blue-700 dark:text-blue-300 text-xs sm:text-sm">
                   These enhanced mock tests provide comprehensive analytics, detailed performance tracking, 
                   and advanced question management. Perfect for final preparation with real-time feedback 
@@ -277,7 +286,7 @@ export default function EnhancedMockTestsPage() {
                     className="w-full mt-3 sm:mt-4 bg-blue-600 hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-700 text-sm sm:text-base" 
                     onClick={() => setLocation(`/mock-test/${test.id}`)}
                   >
-                    Start Enhanced Mock Test
+                    Start Mock Test
                   </Button>
                 </div>
               </CardContent>
@@ -288,17 +297,16 @@ export default function EnhancedMockTestsPage() {
         {!sortedTests.length && !isLoading && (
           <div className="text-center py-8 sm:py-12 px-4">
             <Target className="h-12 w-12 sm:h-16 sm:w-16 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
-            <h3 className="text-lg sm:text-xl font-medium text-gray-900 dark:text-white mb-2">No Enhanced Mock Tests Found</h3>
+            <h3 className="text-lg sm:text-xl font-medium text-gray-900 dark:text-white mb-2">No Mock Tests Found</h3>
             <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400 max-w-md mx-auto">
-              {searchTerm || difficultyFilter !== "all" 
+              {difficultyFilter !== "all" 
                 ? "Try adjusting your filters to see more tests."
-                : "Enhanced mock tests are being prepared. Please check back soon."
+                : "Mock tests are being prepared. Please check back soon."
               }
             </p>
-            {(searchTerm || difficultyFilter !== "all") && (
+            {(difficultyFilter !== "all") && (
               <Button 
                 onClick={() => {
-                  setSearchTerm("");
                   setDifficultyFilter("all");
                 }}
                 className="mt-4 w-full sm:w-auto"
