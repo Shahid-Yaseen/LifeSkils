@@ -380,7 +380,7 @@ export default function DynamicGames({ userId }: DynamicGamesProps) {
               </CardHeader>
               <CardContent className="pt-0">
                 <Tabs defaultValue="general-matching" className="w-full">
-                  <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 mb-4 sm:mb-6 bg-gray-200 dark:bg-gray-800 border-2 border-gray-300 dark:border-gray-600 gap-1">
+                  <TabsList className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 auto-rows-fr w-full mb-4 sm:mb-6 bg-gray-200 dark:bg-gray-800 border-2 border-gray-300 dark:border-gray-600 gap-1 p-1 relative z-10 min-h-[140px] sm:min-h-[80px] lg:min-h-[60px]">
                     <TabsTrigger value="general-matching" className="flex items-center justify-center gap-1 sm:gap-2 text-gray-900 dark:text-gray-100 hover:text-gray-900 dark:hover:text-white data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:shadow-lg py-2 font-semibold text-xs sm:text-sm">
                       <Target className="h-3 w-3 sm:h-4 sm:w-4" />
                       <span className="hidden sm:inline">General Match</span>
@@ -423,28 +423,28 @@ export default function DynamicGames({ userId }: DynamicGamesProps) {
                     </TabsTrigger>
                   </TabsList>
 
-                  <TabsContent value="general-matching">
+                  <TabsContent value="general-matching" className="mt-4">
                     <MatchingCards userId={userId} />
                   </TabsContent>
-                  <TabsContent value="holidays-matching">
+                  <TabsContent value="holidays-matching" className="mt-4">
                     <HolidaysMatching userId={userId} />
                   </TabsContent>
-                  <TabsContent value="holiday-meanings-matching">
+                  <TabsContent value="holiday-meanings-matching" className="mt-4">
                     <HolidayMeaningsMatching userId={userId} />
                   </TabsContent>
-                  <TabsContent value="sports-achievements-matching">
+                  <TabsContent value="sports-achievements-matching" className="mt-4">
                     <SportsAchievementsMatching userId={userId} />
                   </TabsContent>
-                  <TabsContent value="british-artists-matching">
+                  <TabsContent value="british-artists-matching" className="mt-4">
                     <BritishArtistsMatching userId={userId} />
                   </TabsContent>
-                  <TabsContent value="uk-ages-matching">
+                  <TabsContent value="uk-ages-matching" className="mt-4">
                     <UKAgesMatching userId={userId} />
                   </TabsContent>
-                  <TabsContent value="british-leaders-matching">
+                  <TabsContent value="british-leaders-matching" className="mt-4">
                     <BritishLeadersMatching userId={userId} />
                   </TabsContent>
-                  <TabsContent value="uk-cultural-awards-matching">
+                  <TabsContent value="uk-cultural-awards-matching" className="mt-4">
                     <UKCulturalAwardsMatching userId={userId} />
                   </TabsContent>
                 </Tabs>
@@ -466,7 +466,7 @@ export default function DynamicGames({ userId }: DynamicGamesProps) {
               </CardHeader>
               <CardContent className="pt-0">
                 <Tabs defaultValue="acts-treaties-bills-matching" className="w-full">
-                  <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 mb-4 sm:mb-6 bg-gray-200 dark:bg-gray-800 border-2 border-gray-300 dark:border-gray-600 gap-1">
+                  <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 auto-rows-fr mb-4 sm:mb-6 bg-gray-200 dark:bg-gray-800 border-2 border-gray-300 dark:border-gray-600 gap-1 p-1 relative z-10 min-h-[120px] sm:min-h-[60px] lg:min-h-[50px]">
                     <TabsTrigger value="acts-treaties-bills-matching" className="flex items-center justify-center gap-1 sm:gap-2 text-gray-900 dark:text-gray-100 hover:text-gray-900 dark:hover:text-white data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:shadow-lg py-2 font-semibold text-xs sm:text-sm">
                       <FileText className="h-3 w-3 sm:h-4 sm:w-4" />
                       <span className="hidden sm:inline">Acts, Treaties & Bills</span>
@@ -499,7 +499,7 @@ export default function DynamicGames({ userId }: DynamicGamesProps) {
                     </TabsTrigger>
                   </TabsList>
 
-                  <TabsContent value="acts-treaties-bills-matching">
+                  <TabsContent value="acts-treaties-bills-matching" className="mt-4">
                     <div className="space-y-6">
                       {/* Game Header */}
                       <div className="flex items-center justify-between">
@@ -622,19 +622,19 @@ export default function DynamicGames({ userId }: DynamicGamesProps) {
                       </div>
                     </div>
                   </TabsContent>
-                  <TabsContent value="battles-wars-matching">
+                  <TabsContent value="battles-wars-matching" className="mt-4">
                     <BattlesWarsMatching userId={userId} />
                   </TabsContent>
-                  <TabsContent value="justice-system-matching">
+                  <TabsContent value="justice-system-matching" className="mt-4">
                     <JusticeSystemMatching userId={userId} />
                   </TabsContent>
-                  <TabsContent value="prime-ministers-matching">
+                  <TabsContent value="prime-ministers-matching" className="mt-4">
                     <PrimeMinistersMatching userId={userId} />
                   </TabsContent>
-                  <TabsContent value="religion-demographics-matching">
+                  <TabsContent value="religion-demographics-matching" className="mt-4">
                     <ReligionDemographicsMatching userId={userId} />
                   </TabsContent>
-                  <TabsContent value="rulers-religions-matching">
+                  <TabsContent value="rulers-religions-matching" className="mt-4">
                     <RulersReligionsMatching userId={userId} />
                   </TabsContent>
                 </Tabs>
@@ -656,7 +656,7 @@ export default function DynamicGames({ userId }: DynamicGamesProps) {
               </CardHeader>
               <CardContent className="pt-0">
                 <Tabs defaultValue="sports-heroes-matching" className="w-full">
-                  <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 mb-4 sm:mb-6 bg-gray-200 dark:bg-gray-800 border-2 border-gray-300 dark:border-gray-600 gap-1">
+                  <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 auto-rows-fr mb-4 sm:mb-6 bg-gray-200 dark:bg-gray-800 border-2 border-gray-300 dark:border-gray-600 gap-1 p-1 relative z-10 min-h-[100px] sm:min-h-[60px] lg:min-h-[50px]">
                     <TabsTrigger value="sports-heroes-matching" className="flex items-center justify-center gap-1 sm:gap-2 text-gray-900 dark:text-gray-100 hover:text-gray-900 dark:hover:text-white data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:shadow-lg py-2 font-semibold text-xs sm:text-sm">
                       <Medal className="h-3 w-3 sm:h-4 sm:w-4" />
                       <span className="hidden sm:inline">Sports Heroes</span>
@@ -684,19 +684,19 @@ export default function DynamicGames({ userId }: DynamicGamesProps) {
                     </TabsTrigger>
                   </TabsList>
 
-                  <TabsContent value="sports-heroes-matching">
+                  <TabsContent value="sports-heroes-matching" className="mt-4">
                     <SportsHeroesMatching userId={userId} />
                   </TabsContent>
-                  <TabsContent value="traditional-foods-matching">
+                  <TabsContent value="traditional-foods-matching" className="mt-4">
                     <TraditionalFoodsMatching userId={userId} />
                   </TabsContent>
-                  <TabsContent value="uk-memberships-matching">
+                  <TabsContent value="uk-memberships-matching" className="mt-4">
                     <UKMembershipsMatching userId={userId} />
                   </TabsContent>
-                  <TabsContent value="uk-constituent-countries-matching">
+                  <TabsContent value="uk-constituent-countries-matching" className="mt-4">
                     <UKConstituentCountriesMatching userId={userId} />
                   </TabsContent>
-                  <TabsContent value="uk-parliament-devolution-matching">
+                  <TabsContent value="uk-parliament-devolution-matching" className="mt-4">
                     <UKParliamentDevolutionMatching userId={userId} />
                   </TabsContent>
                 </Tabs>
