@@ -138,6 +138,7 @@ const GameComponentMap: Record<string, any> = {
 };
 
 export default function DynamicGames({ userId }: DynamicGamesProps) {
+  const [activeTab, setActiveTab] = useState("true-false");
   const { data: games = [], isLoading } = useQuery<Game[]>({
     queryKey: ["/api/games"],
   });
@@ -167,34 +168,17 @@ export default function DynamicGames({ userId }: DynamicGamesProps) {
       {/* Game Categories Overview */}
       <div className="mb-4 sm:mb-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-3 sm:mb-4 gap-3">
-          <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">Game Categories</h2>
+          <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">Interactive Game Categories</h2>
           <div className="flex items-center gap-2">
             <div className="w-2 h-2 bg-green-500 rounded-full"></div>
             <span className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">All Systems Active</span>
           </div>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
-          <Card className="shadow-lg !bg-white dark:!bg-gray-800 !border-gray-200 dark:!border-gray-700 hover:shadow-xl transition-shadow">
-            <CardHeader className="pb-2 sm:pb-3">
-              <CardTitle className="text-lg sm:text-xl text-gray-900 dark:text-white flex items-center gap-2 sm:gap-3">
-                <div className="w-6 h-6 sm:w-8 sm:h-8 bg-blue-600 rounded-lg flex items-center justify-center flex-shrink-0">
-                  <Sparkles className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
-                </div>
-                <span className="truncate">AI Generated</span>
-              </CardTitle>
-              <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Smart personalized practice questions using artificial intelligence</p>
-            </CardHeader>
-            <CardContent className="pt-0">
-              <div className="flex flex-wrap gap-1 sm:gap-2">
-                <Badge className="bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 text-xs">Fill-in-the-Blank</Badge>
-                <Badge className="bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 text-xs">Multiple Choice</Badge>
-                <Badge className="bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 text-xs">Authentic Content</Badge>
-                <Badge className="bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 text-xs">{aiGeneratedGames.length} Games</Badge>
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card className="shadow-lg !bg-white dark:!bg-gray-800 !border-gray-200 dark:!border-gray-700 hover:shadow-xl transition-shadow">
+          <Card 
+            className="shadow-lg !bg-white dark:!bg-gray-800 !border-gray-200 dark:!border-gray-700 hover:shadow-xl transition-shadow cursor-pointer"
+            onClick={() => setActiveTab("true-false")}
+          >
             <CardHeader className="pb-2 sm:pb-3">
               <CardTitle className="text-lg sm:text-xl text-gray-900 dark:text-white flex items-center gap-2 sm:gap-3">
                 <div className="w-6 h-6 sm:w-8 sm:h-8 bg-green-600 rounded-lg flex items-center justify-center flex-shrink-0">
@@ -209,12 +193,14 @@ export default function DynamicGames({ userId }: DynamicGamesProps) {
                 <Badge className="bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300 text-xs">Quick Learning</Badge>
                 <Badge className="bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300 text-xs">Instant Feedback</Badge>
                 <Badge className="bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300 text-xs">Score Tracking</Badge>
-                <Badge className="bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300 text-xs">{trueFalseGames.length} Games</Badge>
               </div>
             </CardContent>
           </Card>
           
-          <Card className="shadow-lg !bg-white dark:!bg-gray-800 !border-gray-200 dark:!border-gray-700 hover:shadow-xl transition-shadow">
+          <Card 
+            className="shadow-lg !bg-white dark:!bg-gray-800 !border-gray-200 dark:!border-gray-700 hover:shadow-xl transition-shadow cursor-pointer"
+            onClick={() => setActiveTab("match-cards")}
+          >
             <CardHeader className="pb-2 sm:pb-3">
               <CardTitle className="text-lg sm:text-xl text-gray-900 dark:text-white flex items-center gap-2 sm:gap-3">
                 <div className="w-6 h-6 sm:w-8 sm:h-8 bg-purple-600 rounded-lg flex items-center justify-center flex-shrink-0">
@@ -227,33 +213,40 @@ export default function DynamicGames({ userId }: DynamicGamesProps) {
             <CardContent className="pt-0">
               <div className="flex flex-wrap gap-1 sm:gap-2">
                 <Badge className="bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300 text-xs">Flip Cards</Badge>
-                <Badge className="bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300 text-xs">2-Column Match</Badge>
-                <Badge className="bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300 text-xs">3-Column Match</Badge>
-                <Badge className="bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300 text-xs">{matchingGames.length + flipCardGames.length} Games</Badge>
+                <Badge className="bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300 text-xs">Multiple Column Match</Badge>
+                <Badge className="bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300 text-xs">Choose Level</Badge>
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card 
+            className="shadow-lg !bg-white dark:!bg-gray-800 !border-gray-200 dark:!border-gray-700 hover:shadow-xl transition-shadow cursor-pointer"
+            onClick={() => setActiveTab("ai-generated")}
+          >
+            <CardHeader className="pb-2 sm:pb-3">
+              <CardTitle className="text-lg sm:text-xl text-gray-900 dark:text-white flex items-center gap-2 sm:gap-3">
+                <div className="w-6 h-6 sm:w-8 sm:h-8 bg-blue-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <Sparkles className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
+                </div>
+                <span className="truncate">AI Generated</span>
+              </CardTitle>
+              <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Smart personalized practice questions using artificial intelligence</p>
+            </CardHeader>
+            <CardContent className="pt-0">
+              <div className="flex flex-wrap gap-1 sm:gap-2">
+                <Badge className="bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 text-xs">Fill-in-the-Blank</Badge>
+                <Badge className="bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 text-xs">Multiple Choice</Badge>
+                <Badge className="bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 text-xs">Authentic Content</Badge>
               </div>
             </CardContent>
           </Card>
         </div>
       </div>
 
-        {/* Interactive Games Tabs */}
-      <Tabs defaultValue="ai-generated" className="w-full">
+      {/* Interactive Game Categories Tabs */}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <div className="mb-4 sm:mb-6">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-3 sm:mb-4 gap-3">
-            <h3 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white">Interactive Games</h3>
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-              <span className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">Live Games</span>
-            </div>
-          </div>
           <TabsList className="grid w-full grid-cols-3 p-0 bg-gray-200 dark:bg-gray-800 border-2 border-gray-300 dark:border-gray-600">
-            <TabsTrigger value="ai-generated" className="flex items-center justify-center gap-1 sm:gap-2 text-gray-900 dark:text-gray-100 hover:text-gray-900 dark:hover:text-white data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:shadow-lg font-semibold text-xs sm:text-sm py-2">
-              <div className="w-3 h-3 sm:w-4 sm:h-4 bg-blue-600 rounded flex items-center justify-center">
-                <Sparkles className="w-2 h-2 sm:w-2.5 sm:h-2.5 text-white" />
-              </div>
-              <span className="font-medium hidden sm:inline">AI Generated</span>
-              <span className="font-medium sm:hidden">AI</span>
-            </TabsTrigger>
             <TabsTrigger value="true-false" className="flex items-center justify-center gap-1 sm:gap-2 text-gray-900 dark:text-gray-100 hover:text-gray-900 dark:hover:text-white data-[state=active]:bg-green-600 data-[state=active]:text-white data-[state=active]:shadow-lg font-semibold text-xs sm:text-sm py-2">
               <div className="w-3 h-3 sm:w-4 sm:h-4 bg-green-600 rounded flex items-center justify-center">
                 <CheckCircle className="w-2 h-2 sm:w-2.5 sm:h-2.5 text-white" />
@@ -268,67 +261,15 @@ export default function DynamicGames({ userId }: DynamicGamesProps) {
               <span className="font-medium hidden sm:inline">Match the Cards</span>
               <span className="font-medium sm:hidden">Match</span>
             </TabsTrigger>
+            <TabsTrigger value="ai-generated" className="flex items-center justify-center gap-1 sm:gap-2 text-gray-900 dark:text-gray-100 hover:text-gray-900 dark:hover:text-white data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:shadow-lg font-semibold text-xs sm:text-sm py-2">
+              <div className="w-3 h-3 sm:w-4 sm:h-4 bg-blue-600 rounded flex items-center justify-center">
+                <Sparkles className="w-2 h-2 sm:w-2.5 sm:h-2.5 text-white" />
+              </div>
+              <span className="font-medium hidden sm:inline">AI Generated</span>
+              <span className="font-medium sm:hidden">AI</span>
+            </TabsTrigger>
           </TabsList>
         </div>
-
-        {/* AI Generated Games */}
-        <TabsContent value="ai-generated">
-          <div className="space-y-3 sm:space-y-4">
-            {aiGeneratedGames.length > 0 ? (
-              aiGeneratedGames.map((game) => {
-                const GameComponent = GameComponentMap[game.gameType];
-                return (
-                  <Card key={game.id} className="shadow-lg !bg-white dark:!bg-gray-800 !border-gray-200 dark:!border-gray-700">
-                    <CardHeader className="pb-3">
-                      <CardTitle className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2 sm:gap-3">
-                        <div className="w-6 h-6 sm:w-8 sm:h-8 bg-blue-600 rounded-lg flex items-center justify-center flex-shrink-0">
-                          <Sparkles className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
-                        </div>
-                        <span className="truncate">{game.title}</span>
-                      </CardTitle>
-                      <p className="text-sm sm:text-base text-gray-600 dark:text-gray-300">
-                        {game.description}
-                      </p>
-                    </CardHeader>
-                    <CardContent className="pt-0">
-                      {GameComponent ? (
-                        <GameComponent userId={userId} game={game} />
-                      ) : (
-                        <div className="text-center py-6 sm:py-8">
-                          <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
-                            Game component not available for this game type.
-                          </p>
-                        </div>
-                      )}
-                    </CardContent>
-                  </Card>
-                );
-              })
-            ) : !hasAnyGames ? (
-              <Card className="shadow-lg !bg-white dark:!bg-gray-800 !border-gray-200 dark:!border-gray-700">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2 sm:gap-3">
-                    <div className="w-6 h-6 sm:w-8 sm:h-8 bg-blue-600 rounded-lg flex items-center justify-center flex-shrink-0">
-                      <Sparkles className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
-                    </div>
-                    <span className="truncate">AI-Powered Exercise Generator</span>
-                  </CardTitle>
-                  <p className="text-sm sm:text-base text-gray-600 dark:text-gray-300">
-                    Generate personalized practice exercises using advanced AI. Choose your topic and difficulty level for tailored learning using authentic Life in UK content.
-                  </p>
-                </CardHeader>
-                <CardContent className="pt-0">
-                  <AIExercisesGame userId={userId} />
-                </CardContent>
-              </Card>
-            ) : (
-              <div className="text-center py-8 sm:py-12 text-gray-600 dark:text-gray-400">
-                <Sparkles className="h-10 w-10 sm:h-12 sm:w-12 mx-auto mb-3 sm:mb-4" />
-                <p className="text-sm sm:text-base">No AI Generated games available. Please check back later!</p>
-              </div>
-            )}
-          </div>
-        </TabsContent>
 
         {/* True/False Games */}
         <TabsContent value="true-false">
@@ -761,6 +702,65 @@ export default function DynamicGames({ userId }: DynamicGamesProps) {
                 </Tabs>
               </CardContent>
             </Card>
+          </div>
+        </TabsContent>
+
+        {/* AI Generated Games */}
+        <TabsContent value="ai-generated">
+          <div className="space-y-3 sm:space-y-4">
+            {aiGeneratedGames.length > 0 ? (
+              aiGeneratedGames.map((game) => {
+                const GameComponent = GameComponentMap[game.gameType];
+                return (
+                  <Card key={game.id} className="shadow-lg !bg-white dark:!bg-gray-800 !border-gray-200 dark:!border-gray-700">
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2 sm:gap-3">
+                        <div className="w-6 h-6 sm:w-8 sm:h-8 bg-blue-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                          <Sparkles className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
+                        </div>
+                        <span className="truncate">{game.title}</span>
+                      </CardTitle>
+                      <p className="text-sm sm:text-base text-gray-600 dark:text-gray-300">
+                        {game.description}
+                      </p>
+                    </CardHeader>
+                    <CardContent className="pt-0">
+                      {GameComponent ? (
+                        <GameComponent userId={userId} game={game} />
+                      ) : (
+                        <div className="text-center py-6 sm:py-8">
+                          <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
+                            Game component not available for this game type.
+                          </p>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                );
+              })
+            ) : !hasAnyGames ? (
+              <Card className="shadow-lg !bg-white dark:!bg-gray-800 !border-gray-200 dark:!border-gray-700">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2 sm:gap-3">
+                    <div className="w-6 h-6 sm:w-8 sm:h-8 bg-blue-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                      <Sparkles className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
+                    </div>
+                    <span className="truncate">AI-Powered Exercise Generator</span>
+                  </CardTitle>
+                  <p className="text-sm sm:text-base text-gray-600 dark:text-gray-300">
+                    Generate personalized practice exercises using advanced AI. Choose your topic and difficulty level for tailored learning using authentic Life in UK content.
+                  </p>
+                </CardHeader>
+                <CardContent className="pt-0">
+                  <AIExercisesGame userId={userId} />
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="text-center py-8 sm:py-12 text-gray-600 dark:text-gray-400">
+                <Sparkles className="h-10 w-10 sm:h-12 sm:w-12 mx-auto mb-3 sm:mb-4" />
+                <p className="text-sm sm:text-base">No AI Generated games available. Please check back later!</p>
+              </div>
+            )}
           </div>
         </TabsContent>
       </Tabs>

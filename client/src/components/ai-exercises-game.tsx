@@ -97,9 +97,9 @@ export default function AIExercisesGame({ userId }: AIExercisesGameProps) {
   ];
 
   const difficulties = [
-    { value: 1, label: "Beginner", color: "bg-green-100 text-green-800", description: "Basic knowledge, 8-10 questions" },
-    { value: 2, label: "Intermediate", color: "bg-blue-100 text-blue-800", description: "Standard level, 10-12 questions" },
-    { value: 3, label: "Advanced", color: "bg-purple-100 text-purple-800", description: "Challenge mode, 12 questions" }
+    { value: 1, label: "Beginner", color: "bg-green-100 text-green-800", description: "Basic knowledge level" },
+    { value: 2, label: "Intermediate", color: "bg-blue-100 text-blue-800", description: "Standard level" },
+    { value: 3, label: "Advanced", color: "bg-purple-100 text-purple-800", description: "Challenge mode" }
   ];
 
   const handleGenerateExercise = () => {
@@ -247,83 +247,63 @@ export default function AIExercisesGame({ userId }: AIExercisesGameProps) {
 
   return (
     <div className="space-y-6">
-      {/* AI Exercise Generator Header */}
+
+      {/* Topic Selection */}
       <Card className="shadow-lg !bg-white dark:!bg-gray-800 !border-gray-200 dark:!border-gray-700">
         <CardHeader>
-          <CardTitle className="flex items-center gap-3 text-xl text-gray-900 dark:text-white">
-            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-              <Sparkles className="h-5 w-5 text-white" />
+          <CardTitle className="flex items-center gap-2 text-gray-900 dark:text-white">
+            <div className="w-6 h-6 bg-yellow-600 rounded-lg flex items-center justify-center">
+              <Lightbulb className="h-4 w-4 text-white" />
             </div>
-            AI-Powered Exercise Generator
-            <Badge className="bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">Smart Learning</Badge>
+            Choose Your Topic
           </CardTitle>
-          <p className="text-gray-600 dark:text-gray-300 mt-2">
-            Generate personalized exercises using advanced AI. Choose your topic and difficulty level for tailored practice questions.
-          </p>
         </CardHeader>
-      </Card>
-
-      {/* Topic and Difficulty Selection */}
-      <div className="grid md:grid-cols-2 gap-6">
-        <Card className="shadow-lg !bg-white dark:!bg-gray-800 !border-gray-200 dark:!border-gray-700">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-gray-900 dark:text-white">
-              <div className="w-6 h-6 bg-yellow-600 rounded-lg flex items-center justify-center">
-                <Lightbulb className="h-4 w-4 text-white" />
-              </div>
-              Choose Your Topic
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
+        <CardContent>
+          <div className="grid grid-cols-4 gap-3">
             {topics.map((topic) => (
               <div
                 key={topic.value}
-                className={`p-3 border rounded-lg cursor-pointer transition-all hover:border-blue-300 ${
+                className={`p-3 border rounded-lg cursor-pointer transition-all hover:border-blue-300 text-center ${
                   selectedTopic === topic.value ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800'
                 }`}
                 onClick={() => setSelectedTopic(topic.value)}
               >
-                <div className="flex items-center gap-3">
-                  <span className="text-2xl">{topic.icon}</span>
-                  <div>
-                    <div className="font-medium text-gray-900 dark:text-white">{topic.value}</div>
-                    <div className="text-sm text-gray-500 dark:text-gray-400">{topic.description}</div>
-                  </div>
-                </div>
+                <div className="text-2xl mb-2">{topic.icon}</div>
+                <div className="font-medium text-gray-900 dark:text-white text-sm">{topic.value}</div>
+                <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">{topic.description}</div>
               </div>
             ))}
-          </CardContent>
-        </Card>
+          </div>
+        </CardContent>
+      </Card>
 
-        <Card className="shadow-lg !bg-white dark:!bg-gray-800 !border-gray-200 dark:!border-gray-700">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-gray-900 dark:text-white">
-              <div className="w-6 h-6 bg-purple-600 rounded-lg flex items-center justify-center">
-                <Award className="h-4 w-4 text-white" />
-              </div>
-              Select Difficulty
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
+      {/* Difficulty Selection */}
+      <Card className="shadow-lg !bg-white dark:!bg-gray-800 !border-gray-200 dark:!border-gray-700">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-gray-900 dark:text-white">
+            <div className="w-6 h-6 bg-purple-600 rounded-lg flex items-center justify-center">
+              <Award className="h-4 w-4 text-white" />
+            </div>
+            Select Difficulty
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-3 gap-3">
             {difficulties.map((diff) => (
               <div
                 key={diff.value}
-                className={`p-3 border rounded-lg cursor-pointer transition-all hover:border-purple-300 ${
+                className={`p-3 border rounded-lg cursor-pointer transition-all hover:border-purple-300 text-center ${
                   selectedDifficulty === diff.value ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20' : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800'
                 }`}
                 onClick={() => setSelectedDifficulty(diff.value)}
               >
-                <div className="flex items-center justify-between">
-                  <div>
-                    <Badge className={diff.color}>{diff.label}</Badge>
-                    <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">{diff.description}</div>
-                  </div>
-                </div>
+                <Badge className={diff.color}>{diff.label}</Badge>
+                <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">{diff.description}</div>
               </div>
             ))}
-          </CardContent>
-        </Card>
-      </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Generate Exercise Button */}
       <div className="text-center">
