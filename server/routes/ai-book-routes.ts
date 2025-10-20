@@ -52,12 +52,20 @@ router.post(
   '/upload',
   authenticateToken,
   requireAdmin,
-  upload.single('file'),
+  upload.fields([
+    { name: 'contentFile', maxCount: 1 },
+    { name: 'importantPointsFile', maxCount: 1 }
+  ]),
   async (req: AuthenticatedRequest, res) => {
     try {
-      if (!req.file) {
-        return res.status(400).json({ error: 'No file uploaded' });
+      const files = req.files as { [fieldname: string]: Express.Multer.File[] };
+      
+      if (!files || !files.contentFile || !files.importantPointsFile) {
+        return res.status(400).json({ error: 'Both content file and important points file are required' });
       }
+
+      const contentFile = files.contentFile[0];
+      const importantPointsFile = files.importantPointsFile[0];
 
       const { title, author, description } = req.body;
 
@@ -71,13 +79,14 @@ router.post(
           title,
           author: author || null,
           description: description || null,
-          filePath: req.file.path,
+          filePath: contentFile.path,
+          importantPointsPath: importantPointsFile.path,
           isProcessed: false,
         })
         .returning();
 
       res.json({
-        message: 'Book uploaded successfully',
+        message: 'Book uploaded successfully with important points',
         bookId: book.id,
         book,
       });
@@ -106,23 +115,38 @@ router.post(
         return res.status(400).json({ error: 'Book has no file path' });
       }
 
+      if (!book.importantPointsPath) {
+        return res.status(400).json({ error: 'Book has no important points file' });
+      }
+
       res.json({ message: 'Processing started', bookId });
 
       (async () => {
         try {
           console.log(`Starting processing for book: ${book.title}`);
 
-          const fileExtension = path.extname(book.filePath || '').toLowerCase();
-          const mimeType =
-            fileExtension === '.pdf'
+          // Extract text from main content file
+          const contentFileExtension = path.extname(book.filePath || '').toLowerCase();
+          const contentMimeType =
+            contentFileExtension === '.pdf'
               ? 'application/pdf'
               : 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
 
-          const bookText = await extractTextFromFile(book.filePath || '', mimeType);
-          console.log(`Extracted ${bookText.length} characters from book`);
+          const bookText = await extractTextFromFile(book.filePath || '', contentMimeType);
+          console.log(`Extracted ${bookText.length} characters from main content file`);
 
-          const summary = await generateSummary(bookText, book.title);
-          console.log('Summary generated');
+          // Extract text from important points file
+          const pointsFileExtension = path.extname(book.importantPointsPath || '').toLowerCase();
+          const pointsMimeType =
+            pointsFileExtension === '.pdf'
+              ? 'application/pdf'
+              : 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+
+          const importantPointsText = await extractTextFromFile(book.importantPointsPath || '', pointsMimeType);
+          console.log(`Extracted ${importantPointsText.length} characters from important points file`);
+
+          const summary = await generateSummary(bookText, book.title, importantPointsText);
+          console.log('Summary generated focused on important points');
 
           await db.insert(bookSummaries).values({
             bookId: book.id,

@@ -32,6 +32,7 @@ interface BookItem {
   author: string | null;
   description: string | null;
   filePath: string;
+  importantPointsPath: string | null;
   isProcessed: boolean;
   createdAt: string;
 }
@@ -53,7 +54,8 @@ interface Summary {
 }
 
 export default function AdminAIBookSuite() {
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [contentFile, setContentFile] = useState<File | null>(null);
+  const [importantPointsFile, setImportantPointsFile] = useState<File | null>(null);
   const [title, setTitle] = useState("");
   const [author, setAuthor] = useState("");
   const [description, setDescription] = useState("");
@@ -84,12 +86,13 @@ export default function AdminAIBookSuite() {
 
   const uploadMutation = useMutation({
     mutationFn: async () => {
-      if (!selectedFile || !title) {
-        throw new Error("File and title are required");
+      if (!contentFile || !importantPointsFile || !title) {
+        throw new Error("Both files and title are required");
       }
 
       const formData = new FormData();
-      formData.append("file", selectedFile);
+      formData.append("contentFile", contentFile);
+      formData.append("importantPointsFile", importantPointsFile);
       formData.append("title", title);
       formData.append("author", author);
       formData.append("description", description);
@@ -103,7 +106,8 @@ export default function AdminAIBookSuite() {
       });
 
       if (!response.ok) {
-        throw new Error("Upload failed");
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Upload failed");
       }
 
       return response.json();
@@ -111,10 +115,11 @@ export default function AdminAIBookSuite() {
     onSuccess: (data) => {
       toast({
         title: "Upload successful",
-        description: `Book "${data.book.title}" uploaded successfully`,
+        description: `Book "${data.book.title}" uploaded successfully with important points`,
       });
       queryClient.invalidateQueries({ queryKey: ["/api/admin/ai-book/books"] });
-      setSelectedFile(null);
+      setContentFile(null);
+      setImportantPointsFile(null);
       setTitle("");
       setAuthor("");
       setDescription("");
@@ -175,9 +180,15 @@ export default function AdminAIBookSuite() {
     },
   });
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleContentFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      setSelectedFile(e.target.files[0]);
+      setContentFile(e.target.files[0]);
+    }
+  };
+
+  const handleImportantPointsFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setImportantPointsFile(e.target.files[0]);
     }
   };
 
@@ -221,23 +232,51 @@ export default function AdminAIBookSuite() {
               Upload Book
             </CardTitle>
             <CardDescription>
-              Upload a PDF or DOCX file to generate educational content
+              Upload two files: (1) Main content PDF/DOCX and (2) Important points document
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
+            <Alert>
+              <AlertDescription>
+                <strong>Two files required:</strong> Upload the main book/content file and a separate document listing the important points you want to extract content for.
+              </AlertDescription>
+            </Alert>
+            
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="file" data-testid="label-file">File (PDF or DOCX)</Label>
+                <Label htmlFor="contentFile" data-testid="label-content-file" className="flex items-center gap-2">
+                  <Book className="w-4 h-4" />
+                  Main Content File (PDF or DOCX) *
+                </Label>
                 <Input
-                  id="file"
+                  id="contentFile"
                   type="file"
                   accept=".pdf,.docx"
-                  onChange={handleFileChange}
-                  data-testid="input-file"
+                  onChange={handleContentFileChange}
+                  data-testid="input-content-file"
                 />
-                {selectedFile && (
-                  <p className="text-sm text-gray-600 dark:text-gray-400" data-testid="text-selected-file">
-                    Selected: {selectedFile.name} ({(selectedFile.size / 1024 / 1024).toFixed(2)} MB)
+                {contentFile && (
+                  <p className="text-sm text-green-600 dark:text-green-400" data-testid="text-content-file">
+                    ✓ {contentFile.name} ({(contentFile.size / 1024 / 1024).toFixed(2)} MB)
+                  </p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="importantPointsFile" data-testid="label-important-points-file" className="flex items-center gap-2">
+                  <FileText className="w-4 h-4" />
+                  Important Points File (PDF or DOCX) *
+                </Label>
+                <Input
+                  id="importantPointsFile"
+                  type="file"
+                  accept=".pdf,.docx"
+                  onChange={handleImportantPointsFileChange}
+                  data-testid="input-important-points-file"
+                />
+                {importantPointsFile && (
+                  <p className="text-sm text-green-600 dark:text-green-400" data-testid="text-important-points-file">
+                    ✓ {importantPointsFile.name} ({(importantPointsFile.size / 1024 / 1024).toFixed(2)} MB)
                   </p>
                 )}
               </div>
@@ -283,7 +322,7 @@ export default function AdminAIBookSuite() {
 
             <Button
               onClick={handleUpload}
-              disabled={!selectedFile || !title || uploadMutation.isPending}
+              disabled={!contentFile || !importantPointsFile || !title || uploadMutation.isPending}
               className="w-full md:w-auto"
               data-testid="button-upload"
             >
@@ -345,6 +384,18 @@ export default function AdminAIBookSuite() {
                         </h3>
                         {book.author && <p className="text-sm text-gray-600 dark:text-gray-400" data-testid={`text-book-author-${book.id}`}>By {book.author}</p>}
                         {book.description && <p className="text-sm text-gray-600 dark:text-gray-400 mt-1" data-testid={`text-book-description-${book.id}`}>{book.description}</p>}
+                        <div className="flex flex-col gap-1 mt-2 text-xs">
+                          <p className="text-gray-600 dark:text-gray-400 flex items-center gap-1" data-testid={`text-content-file-${book.id}`}>
+                            <Book className="w-3 h-3" />
+                            Content: {book.filePath?.split('/').pop() || 'N/A'}
+                          </p>
+                          {book.importantPointsPath && (
+                            <p className="text-gray-600 dark:text-gray-400 flex items-center gap-1" data-testid={`text-important-points-file-${book.id}`}>
+                              <FileText className="w-3 h-3" />
+                              Important Points: {book.importantPointsPath.split('/').pop()}
+                            </p>
+                          )}
+                        </div>
                         <p className="text-xs text-gray-500 mt-2" data-testid={`text-book-date-${book.id}`}>
                           Uploaded: {new Date(book.createdAt).toLocaleDateString()}
                         </p>

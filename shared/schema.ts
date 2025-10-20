@@ -298,7 +298,8 @@ export const books = pgTable("books", {
   author: text("author"),
   isbn: text("isbn"),
   description: text("description"),
-  filePath: text("file_path"), // Path to the original file
+  filePath: text("file_path"), // Path to the main content file
+  importantPointsPath: text("important_points_path"), // Path to the important points document
   totalPages: integer("total_pages"),
   totalChunks: integer("total_chunks").default(0),
   isProcessed: boolean("is_processed").notNull().default(false),

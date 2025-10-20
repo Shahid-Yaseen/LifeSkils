@@ -77,9 +77,10 @@ export async function extractTextFromFile(filePath: string, fileType: string): P
   }
 }
 
-export async function generateSummary(bookText: string, bookTitle: string): Promise<BookSummary> {
+export async function generateSummary(bookText: string, bookTitle: string, importantPointsText?: string): Promise<BookSummary> {
   try {
     console.log(`Generating summary for book: ${bookTitle}`);
+    console.log(`Using important points guidance: ${importantPointsText ? 'YES' : 'NO'}`);
     
     const textChunks = chunkText(bookText, 15000);
     const summaryPrompts = textChunks.map((chunk, index) => `
@@ -87,22 +88,27 @@ export async function generateSummary(bookText: string, bookTitle: string): Prom
       ${chunk}
     `);
 
+    const importantPointsSection = importantPointsText 
+      ? `\n\nIMPORTANT POINTS TO FOCUS ON:\n${importantPointsText}\n\nYou MUST focus your analysis on the topics and points specified above. Extract content from the book that directly relates to these important points.`
+      : '';
+
     const prompt = `You are an expert educational content analyst. Analyze the following book titled "${bookTitle}" and create a comprehensive summary.
 
 ${summaryPrompts.join('\n\n')}
+${importantPointsSection}
 
 Please provide a detailed analysis in the following JSON format:
 {
-  "summaryText": "A comprehensive 2-3 paragraph summary of the entire book",
+  "summaryText": "A comprehensive 2-3 paragraph summary focusing on the important points specified",
   "chapterBreakdowns": [
     {
       "chapterNumber": 1,
-      "title": "Chapter title",
-      "summary": "Chapter summary",
+      "title": "Chapter title or section title",
+      "summary": "Chapter summary focusing on relevant important points",
       "keyPoints": ["Point 1", "Point 2", "Point 3"]
     }
   ],
-  "keyTopics": ["Topic 1", "Topic 2", "Topic 3"],
+  "keyTopics": ["Topic 1 from important points", "Topic 2 from important points", "Topic 3 from important points"],
   "estimatedCounts": {
     "tests": 5,
     "events": 10,
@@ -110,12 +116,13 @@ Please provide a detailed analysis in the following JSON format:
   }
 }
 
-IMPORTANT:
-1. Base ALL content strictly on the provided book text
-2. Identify actual chapters and sections from the book
-3. Extract real key topics and learning points
-4. Estimate realistic counts based on the content depth
-5. Ensure the summary captures the educational value`;
+CRITICAL INSTRUCTIONS:
+1. If important points are provided, FOCUS EXCLUSIVELY on those topics when analyzing the book
+2. Extract content from the book that relates to the specified important points
+3. Identify chapters/sections that contain information about the important points
+4. Create focused summaries that emphasize the important points
+5. Estimate realistic counts for educational content that can be generated from the important points
+6. If no important points are provided, analyze the entire book comprehensively`;
 
     const response = await openai.chat.completions.create({
       model: 'gpt-4o',
@@ -205,7 +212,7 @@ Please generate content in the following JSON format:
 
 CRITICAL RULES:
 1. Generate ONLY content that is explicitly mentioned in the summary
-2. Use the estimated counts as a guide (${summary.estimatedCounts.tests} tests, ${summary.estimatedCounts.events} events, ${summary.estimatedCounts.games} games)
+2. Use the estimated counts as a guide (${summary.estimatedCounts?.tests || 3} tests, ${summary.estimatedCounts?.events || 5} events, ${summary.estimatedCounts?.games || 2} games)
 3. All questions must be based on factual information from the summary
 4. Timeline events should only include events with specific dates/years mentioned
 5. Games should be educational and based on book content
