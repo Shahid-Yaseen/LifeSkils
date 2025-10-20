@@ -25,6 +25,7 @@ import dataUploadRoutes from "./routes/data-upload-routes";
 import mapLocationsRoutes from "./routes/map-locations-routes";
 import diagramsRoutes from "./routes/diagrams-routes";
 import translationRoutes from "./routes/translation-routes";
+import aiBookRoutes from "./routes/ai-book-routes";
 import { openaiTtsService } from "./services/openai-tts-service";
 import { getPresignedUploadUrl } from "./services/cloudflare-r2";
 
@@ -350,6 +351,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use('/api/rag', ragRoutes);
   app.use('/api/rag-populate', ragPopulateRoutes);
   app.use('/api/translate', translationRoutes);
+
+  // AI Book Intelligence Suite routes
+  app.use('/api/admin/ai-book', aiBookRoutes);
 
   // Enhanced TTS routes
   app.use('/api/tts-enhanced', ttsEnhancedRoutes);

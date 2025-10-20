@@ -65,7 +65,8 @@ import {
   Loader2,
   Gamepad2,
   Moon,
-  Sun
+  Sun,
+  Brain
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -121,6 +122,12 @@ export default function AdminNavigation({ className = "" }: AdminNavigationProps
       href: "/admin/diagrams",
       icon: Crown,
       description: "Manage system diagrams"
+    },
+    {
+      title: "AI Book Intelligence",
+      href: "/admin/ai-book-suite",
+      icon: Brain,
+      description: "AI-powered book content generation"
     },
     {
       title: "Analytics",

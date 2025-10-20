@@ -37,6 +37,7 @@ import AdminTestManagement from "@/pages/admin/AdminTestManagement";
 import AdminDiagramsManagement from "@/pages/admin/AdminDiagramsManagement";
 import AdminTestAnalytics from "@/pages/admin/AdminTestAnalytics";
 import AdminMapManagement from "@/pages/admin/AdminMapManagement";
+import AdminAIBookSuite from "@/pages/admin/AdminAIBookSuite";
 import { useAuth } from "@/contexts/AuthContext";
 import { useEffect } from "react";
 import { useLocation } from "wouter";
@@ -211,6 +212,11 @@ function Router() {
       <Route path="/admin/diagrams">
         <AdminRoute>
           <AdminDiagramsManagement />
+        </AdminRoute>
+      </Route>
+      <Route path="/admin/ai-book-suite">
+        <AdminRoute>
+          <AdminAIBookSuite />
         </AdminRoute>
       </Route>
       

@@ -306,6 +306,16 @@ export const books = pgTable("books", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+export const bookSummaries = pgTable("book_summaries", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  bookId: varchar("book_id").notNull().references(() => books.id, { onDelete: "cascade" }),
+  summaryText: text("summary_text").notNull(), // Full AI-generated summary
+  chapterBreakdowns: jsonb("chapter_breakdowns"), // Array of chapter summaries
+  keyTopics: jsonb("key_topics"), // Array of key topics identified
+  estimatedCounts: jsonb("estimated_counts"), // Estimated counts for tests, events, games
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 export const bookChunks = pgTable("book_chunks", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   bookId: varchar("book_id").notNull().references(() => books.id, { onDelete: "cascade" }),
@@ -364,6 +374,11 @@ export const insertBookSchema = createInsertSchema(books).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
+});
+
+export const insertBookSummarySchema = createInsertSchema(bookSummaries).omit({
+  id: true,
+  createdAt: true,
 });
 
 export const insertBookChunkSchema = createInsertSchema(bookChunks).omit({
@@ -520,6 +535,9 @@ export type VideoAudio = typeof videoAudio.$inferSelect;
 // RAG System Types
 export type InsertBook = z.infer<typeof insertBookSchema>;
 export type Book = typeof books.$inferSelect;
+
+export type InsertBookSummary = z.infer<typeof insertBookSummarySchema>;
+export type BookSummary = typeof bookSummaries.$inferSelect;
 
 export type InsertBookChunk = z.infer<typeof insertBookChunkSchema>;
 export type BookChunk = typeof bookChunks.$inferSelect;
